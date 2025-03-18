@@ -1,0 +1,140 @@
+<!-- src/app/chat/chat.page.html -->
+
+<ion-header>
+  <ion-toolbar>
+    <!-- Logo en el lado izquierdo -->
+    <ion-buttons slot="start">
+      <img class="logo-img" src="assets/images/logo.png" alt="ChatBook Logo" />
+    </ion-buttons>
+
+    <!-- Contenedor central para el mensaje de estado de conexión -->
+    <div class="header-center">
+      <div class="connection-indicator">
+        <div
+          [ngClass]="{ 'green-light': isLoggedIn, 'gray-light': !isLoggedIn }"
+        ></div>
+        <div class="connection-status">
+          {{ isLoggedIn ? 'Estás como usuario' : 'Estás como invitado' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Botón de menú en el lado derecho -->
+    <ion-buttons slot="end">
+      <ion-menu-button menu="chatMenu"></ion-menu-button>
+    </ion-buttons>
+    
+  </ion-toolbar>
+</ion-header>
+
+<ion-content fullscreen>
+
+  <!-- Contenedor principal del chat -->
+  <div class="chat-container">
+    <!-- Área de mensajes -->
+    
+    
+    <div class="chat-messages" #chatMessages>
+      <!-- Listado de mensajes Bot - usuario -->
+      <ion-list>
+        <ion-item *ngFor="let chatItem of messages" [hidden]="chatItem.role === 'system'">
+          <ion-label [ngClass]="{
+              'user-message': chatItem.role === 'user',
+              'bot-message': chatItem.role === 'assistant'
+            }">
+            {{ chatItem.content }}
+          </ion-label>
+        </ion-item>
+      </ion-list>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="action-buttons">
+
+      <!-- Boton de tareas -->
+      <ion-button fill="clear" (click)="sendTasksToLLM()">
+        <ion-icon name="clipboard-outline"></ion-icon>
+      </ion-button>
+
+      <!-- Boton de localizacion -->
+      <ion-button fill="clear" (click)="sendLocation()">
+        <ion-icon name="location-outline"></ion-icon>
+      </ion-button>
+
+      <!--NEW CHAT STORE  -->
+      <ion-button fill="clear" (click)="clearChat()">
+        <ion-icon name="trash-outline"></ion-icon>
+      </ion-button>
+      <!--NEW CHAT STORE -->
+
+    </div>
+
+    <!-- Sección de entrada de mensajes -->
+    <div class="message-input-section">
+      <ion-input
+        [(ngModel)]="userMessage"
+        placeholder="Escribe tu mensaje..."
+          (keydown.enter)="sendMessage()"
+      ></ion-input>
+      <ion-button fill="clear" (click)="sendMessage()">
+        <ion-icon name="send-outline"></ion-icon>
+      
+
+      </ion-button>
+    </div>
+
+  </div>
+
+  <!-- Barra de mensaje de conexión -->
+  <div *ngIf="showMessage" class="success-message">{{ message }}</div>
+</ion-content>
+
+
+
+
+
+<!-- <ion-footer>
+  <ion-toolbar class="ion-text-center ion-margin-top">
+    <ion-title>© 2024 ChatBook</ion-title>
+    <p>Todos los derechos reservados.</p>
+  </ion-toolbar>
+</ion-footer>
+ -->
+
+
+
+
+
+
+
+
+
+<!-- 
+*ng (Class, Model, For, if, etc)
+Es una abreviación de "Angular"
+ng es una convención que se utiliza manejar los servicios y módulos que son propios de Angular. 
+
+*ngClass: 
+Directiva de Angular para clases CSS.
+  [ngClass]="{'user-message': chatItem.fromUser, 
+              'bot-message': !chatItem.fromUser}"
+    Agrega la clase de CSS "user-message" si proveien del usuario el mensaje(True), o la clase bot-message en el otro caso (false), 
+
+
+    
+*[hidden]="chatItem.role === 'system'"
+Usado para ocultar el rol system, que es el prompt de sistema.
+La propiedad hidden en HTML es un atributo booleano. Si se establece a true, el elemento será ocultado.
+
+
+*ngModel: 
+Directiva de Angular para la vinculación de datos bidireccional entre el componente y el template HTML.
+Cuando los datos en el template html cambian, tambien lo hara en su componente "ChatPage.ts" y viceversa. 
+En este caso conecta el input "userMessage" con el archivo "chat.page.ts", en la propiedad de la clase del mismo nombre "userMessage"
+
+*ngFor="let chatItem of messages"
+Directiva de Angular que itera sobre una lista de elementos 
+(messages en este caso) y crea un elemento HTML para cada ítem en la lista.
+Genera dinámicamente una lista de mensajes en la interfaz de usuario. 
+Cada mensaje en el array messages se representa como un elemento en la lista.
+-->

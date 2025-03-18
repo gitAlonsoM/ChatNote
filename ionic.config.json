@@ -1,0 +1,7 @@
+{
+  "name": "ChatBook",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}

@@ -1,0 +1,21 @@
+/* myApp\src\app\register\register.page.scss */
+.register-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+  }
+  
+  .card-register {
+    width: 100%;
+    max-width: 500px;
+  }
+  
+  ion-button {
+    margin-top: 20px;
+  }
+  
+  ion-text {
+    font-size: 0.8em;
+    padding-left: 16px;
+  }

@@ -1,0 +1,43 @@
+<!-- src/app/chat/custom-instruction/custom-instruction.page.html -->
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="end">
+      <ion-menu-button menu="customInstructionMenu"></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Custom Instruction</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding custom-instruction-content">
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Configura tu Instrucción Personalizada</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-item lines="full">
+        <ion-label position="stacked" class="instruction-label">
+          Instrucción para el LLM
+          <p class="instructions">
+            Escribe cómo quieres que el LLM se comporte. (20–200 caracteres).
+          </p>
+        </ion-label>
+        <ion-textarea 
+          [(ngModel)]="customInstruction" 
+          placeholder="Escribe aquí tu instrucción" 
+          autoGrow="true"
+          class="responsive-textarea">
+        </ion-textarea>
+      </ion-item>
+      <ion-grid>
+        <ion-row class="button-row">
+          <ion-col size="6">
+            <ion-button expand="block" (click)="setCustomInstruction()">Establecer</ion-button>
+          </ion-col>
+          <ion-col size="6">
+            <ion-button expand="block" color="medium" (click)="restoreDefault()">Restaurar Valor por Defecto</ion-button>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+    </ion-card-content>
+  </ion-card>
+</ion-content>

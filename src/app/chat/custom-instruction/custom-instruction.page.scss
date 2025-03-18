@@ -1,0 +1,44 @@
+/* src\app\chat\custom-instruction\custom-instruction.page.scss */
+/*NEW CUSTOM INSTRUCTION - Inicio estilos Custom Instruction*/
+.custom-instruction-content {
+  /* --background: #f4f4f4; */
+}
+
+ion-card {
+  margin: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.instruction-label {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.instructions {
+  font-size: 0.8em;
+  color: var(--ion-color-medium);
+  margin-top: 4px;
+}
+
+.button-row {
+  margin-top: 16px;
+}
+/*NEW CUSTOM INSTRUCTION - Fin estilos Custom Instruction*/
+
+/* src/app/chat/custom-instruction/custom-instruction.page.scss */
+
+.responsive-textarea {
+  width: 100%;
+  min-height: 150px; /* Altura mínima para pantallas de escritorio */
+  font-size: 1.1em;
+  padding: 8px;
+}
+
+/* Para dispositivos móviles, aumentar la altura mínima */
+@media (max-width: 600px) {
+  .responsive-textarea {
+    min-height: 200px;
+    font-size: 1.2em;
+  }
+}

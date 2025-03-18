@@ -1,0 +1,19 @@
+// For information on how to create your own theme, please see:
+// http://ionicframework.com/docs/theming/
+
+
+/* DESDE ACA SE CAMBIAN LOS ESTILOS GLOBALES DEL PRYECTO */
+
+
+ion-toolbar {
+    --background: rgb(42, 42, 42);
+  }
+  
+
+  .logo-img{
+    height: 80px;
+    position: relative;
+    right: -20px;
+    top: 10px;
+    
+    }

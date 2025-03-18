@@ -1,0 +1,10 @@
+<div *ngIf="isLoggedIn; else guestTemplate" class="connected">
+  <img src="assets/images/logo-connected.png" alt="Conectado" />
+  <p>Conectado como: {{ authService.getCurrentUserEmail() }}</p>
+</div>
+<ng-template #guestTemplate>
+  <div class="guest">
+    <img src="assets/images/logo-guest.png" alt="Invitado" />
+    <p>Usando como invitado</p>
+  </div>
+</ng-template>

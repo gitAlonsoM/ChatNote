@@ -1,0 +1,173 @@
+/* src\app\login\login.page.scss */
+
+/* Contenedor principal de la página de login */
+.login-container {
+  background-color: rgb(0, 0, 0);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  /* Se puede agregar la transición si se desea un efecto suave en la entrada */
+  /* transition: transform 1s ease-in-out, opacity 0.2s ease-in-out; */
+}
+
+/* Transición suave para la animación del card-login */
+.card-login {
+  transition: transform 1s ease-in-out, opacity 0.2s ease-in-out; /* Animación suave */
+  transform-style: preserve-3d; /* Preserva las transformaciones 3D */
+}
+
+/* Estilo para el logo */
+.logo-img {
+  height: 80px;
+  position: relative;
+  right: -20px;
+  top: 10px;
+}
+
+/* Mensaje de éxito que aparece al iniciar sesión correctamente */
+.success-message {
+  background-color: #28a745; // Verde para éxito
+  color: white;
+  padding: 10px;
+  text-align: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000; // Asegúrate de que esté por encima de otros elementos
+  transition: opacity 0.5s ease-in-out;
+}
+
+/* Estado de conexión: icono y mensaje */
+.connection-status {
+  position: absolute; // Para sacar el contenedor del flujo normal
+  top: 50%;           // Centrado vertical
+  left: 50%;          // Centrado horizontal
+  transform: translate(-50%, -50%); // Ajustar el centrado
+  text-align: center; // Centra el texto
+  z-index: 10;       // Asegúrate de que esté por encima de otros elementos
+}
+
+.connection-status img {
+  width: 100px; // Ajusta el tamaño de la imagen según sea necesario
+  height: auto;
+}
+
+/* Estilo para el botón cargando (spinner) */
+ion-loading {
+  z-index: 20; // Asegúrate de que el loading esté por encima del contenido
+}
+
+/* Animaciones para el botón de login */
+button {
+  border-radius: 10px;
+  padding: 15px 30px;
+  font-size: 16px;
+  font-weight: bold;
+  color: white;
+  text-transform: uppercase;
+  background-color: #3880ff; /* Color de fondo por defecto */
+  transition: transform 0.1s ease-in-out, background-color 0.2s ease;
+  margin: 10px;
+}
+
+button:active {
+  transform: scale(0.95); /* Efecto de presión */
+  background-color: #4c8dff; /* Color más claro al presionar */
+}
+
+/* Estilo del input */
+ion-input {
+  margin-bottom: 15px;
+}
+
+/* Estilo para el campo de email y contraseña */
+ion-label {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* Para los botones de acción (Iniciar sesión y Crear cuenta) */
+ion-button {
+  width: 100%;
+  margin-top: 10px;
+}
+
+/* Estilos para la animación de pulsado en los botones */
+button.animated {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Ajustes en pantallas pequeñas */
+@media (max-width: 576px) {
+  ion-label {
+    font-size: 14px;
+  }
+
+  button {
+    font-size: 14px;
+    padding: 10px 20px;
+  }
+}
+
+/* Estilo para el checkbox de "Recordar cuenta" */
+.remember-me {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.remember-me ion-checkbox {
+  margin-right: 10px;
+}
+
+.remember-me ion-label {
+  font-size: 14px;
+  font-weight: normal;
+  color: #ffffff;
+}
+
+/* Estilo para el contenedor de los botones de acción y opciones adicionales */
+ion-grid {
+  margin-top: 20px;
+}
+
+ion-row {
+  display: flex;
+  justify-content: center;
+}
+
+ion-col {
+  display: flex;
+  justify-content: center;
+  padding: 5px;
+}
+
+ion-col ion-button {
+  width: auto;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+/* Ajuste visual para la barra de mensaje de desconexión */
+.success-message {
+  font-size: 14px;
+  padding: 15px;
+  text-align: center;
+}

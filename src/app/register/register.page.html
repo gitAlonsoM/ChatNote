@@ -1,0 +1,62 @@
+<!-- myApp\src\app\register\register.page.html -->
+<ion-header>
+  <ion-toolbar>
+    <img class="logo-img" src="assets/images/logo.png" alt="ChatBook Logo" />
+  </ion-toolbar>
+</ion-header>
+
+
+<ion-content>
+  <div class="register-container">
+
+    <ion-card class="card-register">
+      <ion-card-header>
+        <ion-card-title>Registrarse</ion-card-title>
+      </ion-card-header>
+
+      <ion-card-content>
+
+        <ion-item>
+          <ion-label position="floating">Correo Electrónico</ion-label>
+          <ion-input type="email" [(ngModel)]="email"></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="floating">Contraseña</ion-label>
+          <ion-input type="password" [(ngModel)]="password"></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="floating">Confirmar Contraseña</ion-label>
+          <ion-input type="password" [(ngModel)]="confirmPassword"></ion-input>
+        </ion-item>
+
+        <ion-button expand="block" (click)="register()">Crear Cuenta</ion-button>
+        <ion-button expand="block" fill="clear" (click)="goToLogin()">Volver al Login</ion-button>
+      
+      </ion-card-content>
+    </ion-card>
+    
+
+  </div>
+</ion-content>
+
+
+
+
+<!-- 
+
+*ngModel: Es una directiva de Angular que permite la vinculación de datos bidireccional. 
+Con ngModel, cualquier cambio en el valor del campo de entrada (input) se refleja automáticamente en la propiedad de la clase del componente, y viceversa.
+Cualquier propiedad que use ngModel debera ser referenciada en el archivo "page.ts" y usada como propieda de la clase.
+
+
+*position="floating"
+floating: Hace que la etiqueta flote o se mueva hacia arriba una vez que el usuario comienza a escribir 
+en el campo de entrada, dejando el espacio para el texto ingresado.
+
+
+*expand="block": 
+Hace que el botón se extienda a lo largo de todo el ancho del contenedor en el que está, es decir, ocupa todo el ancho disponible.
+
+-->

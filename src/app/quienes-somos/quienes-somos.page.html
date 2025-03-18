@@ -1,0 +1,72 @@
+<!-- src\app\quienes-somos\quienes-somos.page.html -->
+
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <!-- Logo en el lado izquierdo -->
+    <ion-buttons slot="start">
+      <img class="logo-img" src="assets/images/logo.png" alt="ChatBook Logo" />
+    </ion-buttons>
+
+    <!-- Botón de menú en el lado derecho -->
+    <ion-buttons slot="end">
+      <ion-menu-button menu="quienesSomosMenu"></ion-menu-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content id="main-content" [fullscreen]="true">
+  <!-- Descripción de la app o del equipo -->
+  <div class="descripcion">
+    <h2>Sobre nosotros</h2>
+    <p>
+      En <strong>ChatBook</strong> trabajamos para ofrecerte una herramienta poderosa
+      que te permita organizar tus tareas diarias de manera fácil e interactuar con un modelo de
+      lenguaje avanzado. Nuestro objetivo es hacer tu vida más sencilla, ayudándote a gestionar
+      tareas y recordatorios mientras disfrutas de una experiencia fluida y eficaz.
+    </p>
+  </div>
+
+  <!-- Visión -->
+  <div class="vision">
+    <h2>Visión</h2>
+    <p>
+      Ser una plataforma líder en la gestión de tareas y asistencia basada en IA, reconocida por
+      su impacto positivo en la productividad y el bienestar de nuestros usuarios.
+    </p>
+  </div>
+
+  <!-- Información de contacto -->
+  <div class="contacto">
+    <h2>Contacto</h2>
+    <p><strong>Correo electrónico:</strong>chatbook2024&#64;gmail.com</p>
+
+    <!-- Barra con redes sociales -->
+    <div class="barra-redes">
+      <div class="logo-titulo">
+        <strong>Nuestras Redes Sociales</strong>
+      </div>
+      <div class="redes-sociales">
+        <a href="https://api.whatsapp.com/send?phone=56984208732" target="_blank" aria-label="WhatsApp">
+          <ion-icon name="logo-whatsapp"></ion-icon>
+        </a>
+        <a href="https://www.instagram.com/chatbook.2024/?next=%2F&hl=en" target="_blank" aria-label="Instagram">
+          <ion-icon name="logo-instagram"></ion-icon>
+        </a>
+        <a href="mailto:chatbook2024@gmail.com" target="_blank" aria-label="Gmail">
+          <ion-icon name="mail-outline"></ion-icon>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ubicación -->
+  <div class="ubicacion">
+    <h2>Ubicación</h2>
+    <iframe
+      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3332.238294033893!2d-71.5550626848156!3d-33.01534808089011!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9689dd3d95ae6b5d%3A0x2bc17c810b3b30bc!2sVi%C3%B1a%20del%20Mar%2C%20Valpara%C3%ADso%2C%20Chile!5e0!3m2!1ses!2scl!4v1689098234567!5m2!1ses!2scl"
+      allowfullscreen=""
+      loading="lazy"
+      referrerpolicy="no-referrer-when-downgrade"
+    ></iframe>
+  </div>
+</ion-content>

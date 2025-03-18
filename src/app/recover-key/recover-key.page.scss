@@ -1,0 +1,32 @@
+/* myApp\src\app\recover-key\recover-key.page.scss */
+
+.container-recover {
+    display: flex;
+    justify-content: center; /* Centra el contenido horizontalmente */
+    align-items: center; /* Centra el contenido verticalmente */
+    height: 100%; /* Asegura que el contenedor ocupe toda la altura disponible */
+    padding: 16px; /* Añadido para evitar que el contenido se pegue a los bordes */
+    box-sizing: border-box; /* Asegura que el padding no afecte el tamaño total */
+}
+
+.card-recover {
+    width: 100%; /* Asegura que el card ocupe todo el ancho disponible */
+    max-width: 500px; /* Establece un máximo de 500px para el card */
+    padding: 16px; /* Añadido para agregar espacio dentro del card */
+    box-sizing: border-box; /* Asegura que el padding se incluya en el tamaño total */
+    border-radius: 8px; /* Opcional: Bordes redondeados para mejorar el diseño */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Opcional: Agrega sombra para darle profundidad */
+}
+
+/* Estilos adicionales opcionales */
+ion-card-header, ion-card-title {
+    text-align: center; /* Centra el título del card */
+}
+
+ion-item {
+    margin-bottom: 16px; /* Espacio entre los elementos de formulario */
+}
+
+ion-input {
+    width: 100%; /* Asegura que el input ocupe todo el ancho dentro de ion-item */
+}

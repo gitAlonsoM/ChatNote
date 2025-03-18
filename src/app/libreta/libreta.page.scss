@@ -1,0 +1,55 @@
+/* src/app/libreta/libreta.page.scss */
+
+
+
+/* Estilos para el ion-toolbar */
+ion-toolbar {
+  display: flex;
+  align-items: center;
+}
+
+/* Estilos para los ion-buttons */
+ion-buttons[slot="start"],
+ion-buttons[slot="end"] {
+  flex: none;
+}
+
+/* Ajustar el tamaño del logo */
+.logo-img {
+  height: 70px;
+}
+
+/* Contenedor central para centrar el mensaje */
+.header-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+/* Estilos para el indicador de conexión */
+.connection-indicator {
+  display: flex;
+  align-items: center;
+}
+
+.connection-status {
+  margin-left: 5px;
+  font-size: 16px;
+  color: white;
+}
+
+.green-light,
+.gray-light {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.green-light {
+  background-color: green;
+}
+
+.gray-light {
+  background-color: gray;
+}
+

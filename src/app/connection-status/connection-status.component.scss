@@ -1,0 +1,19 @@
+div {
+    display: flex;
+    align-items: center; // Alinea verticalmente los elementos dentro del div
+  }
+  
+  img {
+    width: 40px; // Ajusta el tamaño según tus necesidades
+    margin-right: 10px; // Espacio a la derecha de la imagen
+  }
+  
+  .connected p {
+    color: green; // Color para el texto de conexión
+    font-weight: bold; // Puedes agregar un peso de fuente si deseas destacar el texto
+  }
+  
+  .guest p {
+    color: gray; // Color para el texto de invitado
+    font-style: italic; // Puedes usar estilo itálico para diferenciar el texto
+  }

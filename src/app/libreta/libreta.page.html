@@ -1,0 +1,102 @@
+<!-- src\app\libreta\libreta.page.html  -->
+
+
+<ion-header>
+  <ion-toolbar>
+    <!-- Logo en el lado izquierdo -->
+    <ion-buttons slot="start">
+      <img class="logo-img" src="assets/images/logo.png" alt="ChatBook Logo" />
+    </ion-buttons>
+
+    <!-- Contenedor central para el mensaje de estado de conexión -->
+    <div class="header-center">
+      <div class="connection-indicator">
+        <div
+          [ngClass]="{ 'green-light': isLoggedIn, 'gray-light': !isLoggedIn }"
+        ></div>
+        <div class="connection-status">
+          {{ isLoggedIn ? 'Usuario Conectado' : 'Acceso como Invitado' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Botón de menú en el lado derecho -->
+    <ion-buttons slot="end">
+      <ion-menu-button menu="libretaMenu"></ion-menu-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- Mensaje de alerta si es necesario -->
+  <div *ngIf="showMessage" class="alert">{{ message }}</div>
+
+  <!-- Botón para agregar nueva tarea -->
+  <ion-button expand="block" (click)="newTask()">
+    Agregar nueva tarea
+  </ion-button>
+
+  
+   <!-- Lista de tareas -->
+   <ion-list>
+    <ion-item-sliding *ngFor="let task of tasks">
+      <ion-item>
+        <ion-label>
+
+          <h2>{{ task.title }}</h2>
+          <p>{{ task.content }}</p>
+
+          <!-- Mostrar la miniatura de la imagen en caso que exista -->
+          <img
+            *ngIf="task.imageUrl"
+            [src]="task.imageUrl"
+            alt="Imagen de tarea"
+            style="max-width: 100px;"
+          />
+
+        </ion-label>
+      </ion-item>
+
+      <ion-item-options side="end">
+        <ion-item-option (click)="editTask(task.id)">Editar</ion-item-option>
+        <ion-item-option color="danger" (click)="deleteTask(task.id)"
+          >Eliminar</ion-item-option
+        >
+      </ion-item-options>
+    </ion-item-sliding>
+  </ion-list>
+  
+</ion-content>
+
+
+<ion-footer>
+  <ion-toolbar class="ion-text-center ion-margin-top">
+    <ion-title>© 2024 ChatBook</ion-title>
+    <p>Todos los derechos reservados.</p>
+  </ion-toolbar>
+</ion-footer>
+
+
+
+
+
+
+
+<!-- 
+*<ion-item-sliding>: 
+Este es un componente de Ionic que permite deslizar los elementos de la lista para mostrar opciones de acción (como editar o eliminar). Es como un "contenedor" deslizante para cada tarea.
+
+*ngFor="let task of tasks": 
+Es una directiva de Angular que itera sobre la lista de tareas (tasks). Por cada tarea en esa lista, se genera un nuevo <ion-item-sliding> que contiene los detalles de esa tarea.
+let task of tasks: "task" y "tasks" hacen referencia a nombres declarados en el código. "task" es la variable que se genera por cada tarea, y "tasks" es el array de objetos. "let" y "of" son parte de la sintaxis.
+
+*(click)="editTask(task.id)": 
+Eventos de Angular que llama a la función editTask() cuando el usuario hace clic en esta opción. Pasa como argumento el id de la tarea (task.id), que es necesario para identificar cuál tarea debe ser editada.
+
+
+*[ngClass] 
+En Angular es una directiva estructural que se utiliza para agregar o eliminar clases CSS de un elemento dinámicamente en función de condiciones específicas. 
+
+
+
+-->

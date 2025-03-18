@@ -1,0 +1,105 @@
+/* Fondo general del ion-content */
+ion-content {
+  --background: #000000fb; /* Fondo semitransparente para el contenido */
+  padding: 0; /* Eliminar espaciado interno */
+  margin-top: 0; /* Sin margen superior */
+}
+
+/* Contenedor principal del contenido */
+.contenido-principal {
+  margin: 0 auto; /* Centrar el contenido */
+  max-width: 800px; /* Limitar el ancho máximo */
+  background: rgba(12, 4, 4, 0.667); /* Fondo oscuro */
+  border-radius: 8px; /* Bordes redondeados */
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Sombra ligera */
+  padding: 16px; /* Espaciado interno */
+}
+
+/* Estilo de las secciones */
+.descripcion,
+.contacto,
+.vision,
+.ubicacion {
+  margin-bottom: 0px; /* Separación entre secciones */
+  padding: 16px; /* Espaciado interno */
+  background: rgba(255, 255, 255, 0.05); /* Fondo tenue */
+  border-radius: 8px; /* Bordes redondeados */
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2); /* Sombra ligera */
+}
+
+/* Títulos de las secciones */
+.descripcion h2,
+.contacto h2,
+.vision h2,
+.ubicacion h2 {
+  font-size: 1.5rem;
+  color: #007bff; /* Azul para los títulos */
+  margin-bottom: 12px;
+}
+
+/* Párrafos dentro de las secciones */
+.descripcion p,
+.contacto p,
+.vision p,
+.ubicacion p {
+  font-size: 1rem;
+  color: #d7d7d7; /* Texto blanco */
+  line-height: 1.5;
+}
+
+/* Resaltar elementos importantes */
+.contacto p strong,
+.descripcion p strong,
+.vision p strong {
+  color: #007bff; /* Azul para los textos resaltados */
+}
+
+/* Barra azul con redes sociales */
+.barra-redes {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #1919fc86; /* Color azul */
+  padding: 10px 20px; /* Espaciado interno */
+  color: rgba(255, 255, 255, 0.951); /* Texto blanco */
+  border-radius: 5px; /* Bordes redondeados */
+  margin-top: 20px; /* Separación con el contenido principal */
+}
+
+/* Estilo para el título de la barra */
+.barra-redes .logo-titulo {
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+/* Contenedor de íconos de redes sociales */
+.barra-redes .redes-sociales {
+  display: flex;
+  gap: 15px; /* Separación entre íconos */
+}
+
+/* Estilo de los íconos */
+.barra-redes .redes-sociales a {
+  font-size: 1.8em; /* Tamaño de los íconos */
+  color: white; /* Blanco inicial */
+  transition: transform 0.2s, color 0.2s; /* Animación suave */
+}
+
+.barra-redes .redes-sociales a:hover {
+  color: #d1e7ff; /* Azul claro al pasar el ratón */
+  transform: scale(1.1); /* Efecto de zoom */
+}
+
+/* Estilo del mapa (ubicación) */
+.ubicacion iframe {
+  border: 0;
+  width: 100%; /* Adaptar al ancho del contenedor */
+  height: 250px; /* Altura del mapa */
+  border-radius: 8px; /* Bordes redondeados */
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2); /* Sombra ligera */
+}
+
+/* Ajustar el tamaño del logo */
+.logo-img {
+  height: 70px; /* Reducido para ahorrar espacio */
+}

@@ -1,0 +1,72 @@
+<ion-header>
+  <ion-toolbar>
+    <img class="logo-img" src="assets/images/logo.png" alt="ChatBook Logo" />
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <!-- Barra de mensaje de desconexión -->
+  <div *ngIf="showMessage" class="success-message">
+    {{ message }}
+  </div>
+
+  <!-- Contenedor de conexión -->
+  <div *ngIf="isConnecting" class="connection-status">
+    <img src="assets/images/logo.png" alt="Conexión" />
+    <p>{{ isGuest ? '...' : '...' }}</p>
+  </div>
+
+  <div class="login-container">
+    <ion-card class="card-login" [@pulseAnimation]="animationState"> <!-- Usa animationState -->
+      <ion-card-header>
+        <ion-card-title>Iniciar Sesión</ion-card-title>
+      </ion-card-header>
+
+      <ion-card-content>
+        <!-- Campo de email -->
+        <ion-item>
+          <ion-label position="floating">Email</ion-label>
+          <ion-input type="text" [(ngModel)]="email"></ion-input>
+        </ion-item>
+
+        <!-- Campo de contraseña -->
+        <ion-item>
+          <ion-label position="floating">Contraseña</ion-label>
+          <ion-input type="password" [(ngModel)]="password"></ion-input>
+        </ion-item>
+
+        <!-- Casilla de "Recordar cuenta" -->
+        <ion-item>
+          <ion-label>Recordar cuenta</ion-label>
+          <ion-checkbox [(ngModel)]="rememberMe"></ion-checkbox>
+        </ion-item>
+
+        <!-- Botón de login -->
+        <ion-button expand="block" (click)="login()">Entrar</ion-button>
+        <ion-button expand="block" fill="clear" (click)="guestLogin()">Entrar como invitado</ion-button>
+
+        <!-- Contenedor de las opciones adicionales -->
+        <ion-grid>
+          <ion-row>
+            <ion-col>
+              <ion-button expand="block" fill="clear" (click)="createAcc()">Crear cuenta</ion-button>
+            </ion-col>
+            <ion-col>
+              <ion-button expand="block" fill="clear" (click)="forgottenPassword()">Olvidaste la contraseña?</ion-button>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <!-- Loading indicador -->
+  <ion-loading [isOpen]="loading" message="Cargando..." spinner="circles"></ion-loading>
+</ion-content>
+
+<ion-footer>
+  <ion-toolbar class="ion-text-center ion-margin-top">
+    <ion-title>© 2024 ChatBook</ion-title>
+    <p>Todos los derechos reservados.</p>
+  </ion-toolbar>
+</ion-footer>
