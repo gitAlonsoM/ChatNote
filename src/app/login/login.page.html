@@ -1,6 +1,7 @@
 <ion-header>
   <ion-toolbar>
-    <img class="logo-img" src="assets/images/logo.png" alt="ChatBook Logo" />
+    <!-- Puedes dejar este logo aquí si lo quieres visible también fuera del formulario -->
+    <!-- <img class="logo-img" src="assets/images/logo.png" alt="ChatBook Logo" /> -->
   </ion-toolbar>
 </ion-header>
 
@@ -17,46 +18,58 @@
   </div>
 
   <div class="login-container">
-    <ion-card class="card-login" [@pulseAnimation]="animationState"> <!-- Usa animationState -->
-      <ion-card-header>
-        <ion-card-title>Iniciar Sesión</ion-card-title>
-      </ion-card-header>
+    <ion-card class="card-login" [@pulseAnimation]="animationState">
 
-      <ion-card-content>
-        <!-- Campo de email -->
-        <ion-item>
-          <ion-label position="floating">Email</ion-label>
-          <ion-input type="text" [(ngModel)]="email"></ion-input>
-        </ion-item>
+      <!-- COLUMNA IZQUIERDA: LOGO -->
+      <div class="card-left">
+        <img class="logo-img" src="assets/images/logo.png" alt="ChatBook Logo" />
+      </div>
 
-        <!-- Campo de contraseña -->
-        <ion-item>
-          <ion-label position="floating">Contraseña</ion-label>
-          <ion-input type="password" [(ngModel)]="password"></ion-input>
-        </ion-item>
+      <!-- COLUMNA DERECHA: FORMULARIO DE LOGIN -->
+      <div class="card-right">
+        <ion-card-header>
+          <ion-card-title>Iniciar Sesión</ion-card-title>
+        </ion-card-header>
 
-        <!-- Casilla de "Recordar cuenta" -->
-        <ion-item>
-          <ion-label>Recordar cuenta</ion-label>
-          <ion-checkbox [(ngModel)]="rememberMe"></ion-checkbox>
-        </ion-item>
+        <ion-card-content>
+          <!-- Campo de email -->
+          <ion-item>
+            <ion-label position="floating">Email</ion-label>
+            <ion-input type="text" [(ngModel)]="email"></ion-input>
+          </ion-item>
 
-        <!-- Botón de login -->
-        <ion-button expand="block" (click)="login()">Entrar</ion-button>
-        <ion-button expand="block" fill="clear" (click)="guestLogin()">Entrar como invitado</ion-button>
+          <!-- Campo de contraseña -->
+          <ion-item>
+            <ion-label position="floating">Contraseña</ion-label>
+            <ion-input type="password" [(ngModel)]="password"></ion-input>
+          </ion-item>
 
-        <!-- Contenedor de las opciones adicionales -->
-        <ion-grid>
-          <ion-row>
-            <ion-col>
-              <ion-button expand="block" fill="clear" (click)="createAcc()">Crear cuenta</ion-button>
-            </ion-col>
-            <ion-col>
-              <ion-button expand="block" fill="clear" (click)="forgottenPassword()">Olvidaste la contraseña?</ion-button>
-            </ion-col>
-          </ion-row>
-        </ion-grid>
-      </ion-card-content>
+          <!-- Casilla de "Recordar cuenta" -->
+          <ion-item>
+            <ion-label>Recordar cuenta</ion-label>
+            <ion-checkbox [(ngModel)]="rememberMe"></ion-checkbox>
+          </ion-item>
+
+          <!-- GRUPO DE BOTONES PRINCIPALES -->
+          <div class="button-group">
+            <ion-button expand="block" color="primary" (click)="login()">Entrar</ion-button>
+            <ion-button expand="block" color="light" (click)="guestLogin()">Entrar como invitado</ion-button>
+          </div>
+
+          <!-- Contenedor de las opciones adicionales -->
+          <ion-grid>
+            <ion-row>
+              <ion-col>
+                <ion-button expand="block" fill="clear" (click)="createAcc()">Crear cuenta</ion-button>
+              </ion-col>
+              <ion-col>
+                <ion-button expand="block" fill="clear" (click)="forgottenPassword()">Olvidaste la contraseña?</ion-button>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+        </ion-card-content>
+      </div>
+
     </ion-card>
   </div>
 
