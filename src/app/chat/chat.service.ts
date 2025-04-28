@@ -10,30 +10,41 @@ import { Http } from '@capacitor-community/http';
   providedIn: 'root',
 })
 
-
 export class ChatService {
 
-  
-   //NEW CUSTOM INSTRUCTION - Inicio actualización de ChatService
-   private readonly _defaultPrompt: string = `Actúa como una secretaria eficiente que se encarga de recibir y organizar tareas, analizar ubicacion en coordenadas, conversaciones amistosas, etc.`;
-  
-   private systemPrompt: string = this._defaultPrompt;
-   
-   public updateSystemPrompt(newPrompt: string): void {
+  //NEW CUSTOM INSTRUCTION - Inicio actualización de ChatService
+  private readonly _defaultPrompt: string = `
+Eres una asistente virtual experta en organizar tareas, analizar ubicación en coordenadas, mantener conversaciones amistosas y responder consultas.
 
-    const reinforcementText = `Asumiras que la ubicacion en coordenadas que te llega es en donde esta el usuario en ese momento y le entregaras informacion relevante con esa ubicacion. Tambien te encargaras de organizar tareas que el usuario puede enviarte, cuando te envie un listado de tareas, asumiras que son tareas que el usuario a guardado, y le ayudaras a organizarse mejor en sus quehaceres. Importante: En cuanto a tu personalidad y otras tareas que puedas cumplir seguiras extricamente lo siguiente en cada conversacion y no abandonaras nunca el ROL:\n\n`;
+Tu comportamiento se divide en tres modos:
+
+1. **Modo Conversacional:** Si el usuario formula preguntas o conversaciones generales, responde de forma natural y conversacional, manteniendo un tono cercano, respetuoso y claro.
+
+2. **Modo READ:** Si el usuario dice expresiones como "leer las tareas", "read", "lee la tabla", "muéstrame las tareas", o cualquier sinónimo que implique obtener tareas, responde estrictamente con el siguiente JSON:
+{ "action": "READ" }
+
+3. **Modo COORDENADAS:** Si el mensaje del usuario contiene coordenadas (latitud y longitud), analiza la ubicación y puedes sugerir tareas o ideas relacionadas con el lugar.
+
+**IMPORTANTE:** No incluyas ningún otro contenido o formato extra en Modo READ. Si la solicitud es para ver tareas, tu respuesta debe ser *solo*:
+{ "action": "READ" }
+
+Usa este esquema para determinar tu respuesta.
+`;
+
+  private systemPrompt: string = this._defaultPrompt;
+   
+  public updateSystemPrompt(newPrompt: string): void {
+    const reinforcementText = `Asumirás que la ubicación en coordenadas que te llega es donde está el usuario en ese momento y le entregarás información relevante con esa ubicación. También te encargarás de organizar tareas que el usuario puede enviarte. Cuando te envíe un listado de tareas, asumirás que son tareas que el usuario ha guardado, y le ayudarás a organizarse mejor en sus quehaceres. Importante: En cuanto a tu personalidad y otras tareas que puedas cumplir, seguirás estrictamente lo siguiente en cada conversación y no abandonarás nunca el ROL:\n\n`;
     this.systemPrompt = reinforcementText + newPrompt;
-   }
+  }
    
-   public getDefaultPrompt(): string {
-     return this._defaultPrompt;
-   }
-   //NEW CUSTOM INSTRUCTION - Fin actualización de ChatService
-
+  public getDefaultPrompt(): string {
+    return this._defaultPrompt;
+  }
+  //NEW CUSTOM INSTRUCTION - Fin actualización de ChatService
 
   private apiUrl = 'https://api.openai.com/v1/chat/completions'; //Endpoint
-  private apiKey = '';
-
+  private apiKey = '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';
 
   private apiParams = {     //objeto literal{} (clave(propiedades)/valor)
     model: 'gpt-4o-mini',   //gpt-4, gpt-4-turbo, gpt-4o-mini, gpt-3.5-turbo
@@ -44,11 +55,7 @@ export class ChatService {
     top_p: 1,               //0 a 1.
   };
 
-
   constructor(private http: HttpClient, private platform: Platform) {} 
-
-
-
 
   sendMessageToLLM(messages: { role: string; content: string }[]): Observable<any> { //metodo para el LLM, retorna un observable para manejar la respuesta
     
@@ -62,17 +69,15 @@ export class ChatService {
       ...messages,
     ];
 
-
     const body = {
       ...this.apiParams,
       messages: messagesWithSystemPrompt,
     };
 
-       // DEBUG: Imprime en consola el system prompt y los mensajes que se enviarán
-       console.log("DEBUG: Custom Instruction (system prompt):", this.systemPrompt);
-       console.log("DEBUG: Mensajes enviados:", messages);
+    // DEBUG: Imprime en consola el system prompt y los mensajes que se enviarán
+    console.log("DEBUG: Custom Instruction (system prompt):", this.systemPrompt);
+    console.log("DEBUG: Mensajes enviados:", messages);
 
-       
     if (this.platform.is('hybrid')) {
       // Ejecutándose en dispositivo o emulador
       const options = {
@@ -82,7 +87,7 @@ export class ChatService {
         params: {}, // Agregar un objeto params vacío
       };
 
-      return from(Http.post(options)).pipe( //retorna la respuesta de la api como post, 
+      return from(Http.post(options)).pipe( //retorna la respuesta de la api como post
         catchError((error) => {  //Depuracion en caso de errores
           console.error('Error al enviar mensaje al LLM:', error); 
           alert(`Error al enviar mensaje: ${JSON.stringify(error, null, 2)}`);
@@ -105,9 +110,6 @@ export class ChatService {
     }
   }
 }
-
-
-
 
 
 
