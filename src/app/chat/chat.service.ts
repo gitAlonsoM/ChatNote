@@ -44,7 +44,7 @@ Usa este esquema para determinar tu respuesta.
   //NEW CUSTOM INSTRUCTION - Fin actualización de ChatService
 
   private apiUrl = 'https://api.openai.com/v1/chat/completions'; //Endpoint
-  private apiKey = '';
+  private apiKey = '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';
 
   private apiParams = {     //objeto literal{} (clave(propiedades)/valor)
     model: 'gpt-4o-mini',   //gpt-4, gpt-4-turbo, gpt-4o-mini, gpt-3.5-turbo
