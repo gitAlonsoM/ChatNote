@@ -225,8 +225,3 @@ android/app/build/outputs/apk/debug/app-debug.apk
 ## Archivo clave de android studio
 AndroidManifest.xml
 
-## =========================================================================================
-
-Cuenta
-#toccatafugue45@gmail.com
-AndreZ1515

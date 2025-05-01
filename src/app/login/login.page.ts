@@ -1,3 +1,4 @@
+//src\app\login\login.page.ts
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
@@ -51,12 +52,13 @@ export class LoginPage implements OnInit {
     // Remover mensaje de invitado
     localStorage.removeItem('guestMessage');
 
-    // Verificar si el usuario ya está logueado y "recordar cuenta"
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      // Si hay usuario guardado en localStorage, iniciar sesión automáticamente
-      this.router.navigate(['/chat']);
-    }
+    
+    this.authService.isLoggedIn$.subscribe(isLoggedIn => {
+      if (isLoggedIn) {
+        this.router.navigate(['/chat']);
+      }
+    });
+  
   }
    
 // entrar como usuario autenticado

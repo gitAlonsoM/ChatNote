@@ -5,15 +5,15 @@ import { Observable, throwError, from } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Platform } from '@ionic/angular';
 import { Http } from '@capacitor-community/http';
+import { AuthService } from '../services/auth.service';  // DEBUG: import AuthService
+
 
 @Injectable({
   providedIn: 'root',
 })
 
-
 export class ChatService {
 
-  
    private readonly _defaultPrompt: string = `
 Eres una asistente virtual experta en organizar tareas y responder consultas. 
 Tu comportamiento se divide en dos modos:
@@ -33,42 +33,35 @@ Usa este esquema para determinar tu respuesta.
    public updateSystemPrompt(newPrompt: string): void {
 
     const reinforcementText = `Asumiras que la ubicacion en coordenadas que te llega es en donde esta el usuario en ese momento y le entregaras informacion relevante con esa ubicacion. Tambien te encargaras de organizar tareas que el usuario puede enviarte, cuando te envie un listado de tareas, asumiras que son tareas que el usuario a guardado, y le ayudaras a organizarse mejor en sus quehaceres. Importante: En cuanto a tu personalidad y otras tareas que puedas cumplir seguiras extricamente lo siguiente en cada conversacion y no abandonaras nunca el ROL:\n\n`;
-    this.systemPrompt = reinforcementText + newPrompt;
-   }
+    this.systemPrompt =
+        this._defaultPrompt   +   // conserva la regla READ
+        reinforcementText     +
+        newPrompt;                // tareas u otras instrucciones
+  }
    
    public getDefaultPrompt(): string {
      return this._defaultPrompt;
    }
-   //NEW CUSTOM INSTRUCTION - Fin actualización de ChatService
 
-
-/*   private apiUrl = 'https://api.openai.com/v1/chat/completions'; //Endpoint
-  private apiKey = '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';
- */
 
   private backendApiUrl = 'http://127.0.0.1:8000/api/llm/'; 
 
-/* 
-  private apiParams = {     //objeto literal{} (clave(propiedades)/valor)
-    model: 'gpt-4o-mini',   //gpt-4, gpt-4-turbo, gpt-4o-mini, gpt-3.5-turbo
-    temperature: 1,         //(0(determinista) a 2(creativo)
-    max_tokens: 150,
-    frequency_penalty: 0.3, //(-2.0 a 2.0). valores altos penalizan repeticion de palabras
-    presence_penalty: 0,    //(-2.0 a 2.0.)Favorece palabras nuevas
-    top_p: 1,               //0 a 1.
-  };
- */
-
-  constructor(private http: HttpClient, private platform: Platform) {} 
+  constructor(
+    private http: HttpClient,
+    private platform: Platform,
+    private authService: AuthService    // DEBUG: inject AuthService to obtain UID
+  ) {}
 
 
 
 
   sendMessageToLLM(messages: { role: string; content: string }[]): Observable<any> { //metodo para el LLM, retorna un observable para manejar la respuesta
-    
+    const uid = this.authService.getCurrentUser()?.uid;                // DEBUG: retrieve current user's UID
+    console.log(`DEBUG: Sending message with UID=${uid}`);             // DEBUG: log UID on each call
+
     const headers = {
       'Content-Type': 'application/json',
-    /*   'Authorization': `Bearer ${this.backendApiUrl}`, */
+      'Authorization': `Bearer ${this.backendApiUrl}`,
     };
 
     const messagesWithSystemPrompt = [
@@ -76,9 +69,11 @@ Usa este esquema para determinar tu respuesta.
       ...messages,
     ];
 
+    const email = this.authService.getCurrentUser()?.email;  // DEBUG: retrieve current user's email
 
     const body = {
-      /* ...this.apiParams, */
+      uid: uid,
+      email: email,                      // DEBUG: include email in request payload
       messages: messagesWithSystemPrompt,
     };
 
