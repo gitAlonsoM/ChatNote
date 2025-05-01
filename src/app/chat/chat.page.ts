@@ -85,38 +85,42 @@ export class ChatPage implements OnInit, OnDestroy {
       ];
 
       // Envía el mensaje al LLM y espera la respuesta
-      this.chatService.sendMessageToLLM(messageToSend).subscribe(
+      this.chatService.sendMessageToLLM(this.messages).subscribe(
         (response) => {
-          // Manejar la respuesta dependiendo del entorno
-          let botReplyContent: string;
-
-          if (this.platform.is('hybrid')) {
-            // Entorno nativo
-            const responseData = response.data;
-            console.log('Respuesta del LLM:', responseData);
-            if (
-              responseData &&
-              responseData.choices &&
-              responseData.choices.length > 0
-            ) {
-              botReplyContent = responseData.choices[0].message.content;
-            } else {
-              botReplyContent = 'Error al interpretar la respuesta del LLM.';
-            }
+          let botReplyContent: string = '';
+      
+          // Verificar si la respuesta incluye tareas (la API retorna { tasks: [...] } en lugar de choices)
+          if (response.tasks) {
+            // Formatear las tareas en un mensaje
+            botReplyContent = 'Tareas obtenidas:\n';
+            response.tasks.forEach((task: any, index: number) => {
+              botReplyContent += `Tarea ${index + 1}: ${task.titulo} - ${task.descripcion}\n`;
+            });
           } else {
-            // En el navegador
-            console.log('Respuesta del LLM:', response);
-            if (response && response.choices && response.choices.length > 0) {
-              botReplyContent = response.choices[0].message.content;
+            // Si no se reciben tareas, se procesa la respuesta normal del LLM
+            if (this.platform.is('hybrid')) {
+              // Entorno nativo
+              const responseData = response.data;
+              console.log('Respuesta del LLM:', responseData);
+              if (responseData && responseData.choices && responseData.choices.length > 0) {
+                botReplyContent = responseData.choices[0].message.content;
+              } else {
+                botReplyContent = 'Error al interpretar la respuesta del LLM.';
+              }
             } else {
-              botReplyContent = 'Error al interpretar la respuesta del LLM.';
+              // En el navegador
+              console.log('Respuesta del LLM:', response);
+              if (response && response.choices && response.choices.length > 0) {
+                botReplyContent = response.choices[0].message.content;
+              } else {
+                botReplyContent = 'Error al interpretar la respuesta del LLM.';
+              }
             }
           }
-
-          // Agregar la respuesta del asistente al array de mensajes
+      
+          // Agregar la respuesta (ya sea las tareas o la respuesta normal) al array de mensajes
           this.messages.push({ role: 'assistant', content: botReplyContent });
-           //NEW SCROLL - Desplazar scroll al final tras agregar el mensaje del asistente
-           this.scrollToBottom();
+          this.scrollToBottom();
         },
         (error) => {
           console.error('Error enviando mensaje al LLM', error);
@@ -124,8 +128,12 @@ export class ChatPage implements OnInit, OnDestroy {
             role: 'assistant',
             content: 'Error al comunicarse con el LLM.',
           });
+          this.scrollToBottom();
         }
       );
+
+
+
     } catch (error) {
       console.error('Error obteniendo la ubicación:', error);
       this.messages.push({
@@ -168,66 +176,61 @@ export class ChatPage implements OnInit, OnDestroy {
   // Enviar el mensaje al bot y obtener su respuesta
   sendMessage() {
     if (this.userMessage.trim().length > 0) {
-
-     // Agregar el mensaje del usuario y guardar el historial
-    this.messages.push({ role: 'user', content: this.userMessage });
-    this.chatStorageService.saveMessages(this.messages); //NEW CHAT STORE
-
-    this.scrollToBottom();
-
-      // Enviar el array completo de mensajes al LLM
+      this.messages.push({ role: 'user', content: this.userMessage });
+      this.chatStorageService.saveMessages(this.messages);
+      this.scrollToBottom();
+  
       this.chatService.sendMessageToLLM(this.messages).subscribe(
         (response) => {
-          // Manejar la respuesta dependiendo del entorno
-          let botReplyContent: string;
-
-          if (this.platform.is('hybrid')) {
-            //entorno nativo
-            // En dispositivos, la respuesta está en response.data
-            const responseData = response.data;
-            console.log('Respuesta del LLM:', responseData);
-            if (
-              responseData &&
-              responseData.choices &&
-              responseData.choices.length > 0
-            ) {
-              botReplyContent = responseData.choices[0].message.content;
-            } else {
-              botReplyContent = 'Error al interpretar la respuesta del LLM.';
-            }
+          let botReplyContent: string = '';
+  
+          // Si la respuesta contiene tareas, formatearlas y actualizamos el system prompt
+          if (response.tasks) {
+            botReplyContent = 'Tareas obtenidas:\n';
+            response.tasks.forEach((task: any, index: number) => {
+              botReplyContent += `Tarea ${index + 1}: ${task.titulo} - ${task.descripcion}\n`;
+            });
+            // Actualizamos el system prompt para que el LLM "conozca" las tareas
+            this.chatService.updateSystemPrompt("Tareas actuales:\n" + botReplyContent);
           } else {
-            // En el navegador, la respuesta está directamente en response
-            console.log('Respuesta del LLM:', response);
-            if (response && response.choices && response.choices.length > 0) {
-              botReplyContent = response.choices[0].message.content;
+            // Resto de la lógica para respuesta normal del LLM
+            if (this.platform.is('hybrid')) {
+              const responseData = response.data;
+              console.log('Respuesta del LLM:', responseData);
+              if (responseData && responseData.choices && responseData.choices.length > 0) {
+                botReplyContent = responseData.choices[0].message.content;
+              } else {
+                botReplyContent = 'Error al interpretar la respuesta del LLM.';
+              }
             } else {
-              botReplyContent = 'Error al interpretar la respuesta del LLM.';
+              console.log('Respuesta del LLM:', response);
+              if (response && response.choices && response.choices.length > 0) {
+                botReplyContent = response.choices[0].message.content;
+              } else {
+                botReplyContent = 'Error al interpretar la respuesta del LLM.';
+              }
             }
           }
-
-          // Agregar la respuesta del asistente al array de mensajes
+  
+          // Agregamos la respuesta (ya sea las tareas o la respuesta normal) al historial del chat
           this.messages.push({ role: 'assistant', content: botReplyContent });
-
           this.scrollToBottom();
-
         },
         (error) => {
           console.error('Error enviando mensaje al LLM', error);
           this.messages.push({
             role: 'assistant',
             content: 'Error al comunicarse con el LLM.',
-        
-
           });
           this.scrollToBottom();
         }
       );
-
-      this.userMessage = ''; // Limpiar el input después de enviar
-       //NEW SCROLL - Desplazar scroll al final tras enviar el mensaje
-       this.scrollToBottom();
+  
+      this.userMessage = '';
+      this.scrollToBottom();
     }
   }
+  
 
 
   // Método para enviar las tareas almacenadas al LLM
@@ -340,39 +343,3 @@ export class ChatPage implements OnInit, OnDestroy {
 }
 
 
-
-
-/* 
-* ./: Directorio actual (mismo nivel).
-  ../: Sube un nivel en el árbol de directorios.
-  Sin extensión .ts: TypeScript sabe automáticamente que está buscando un archivo .ts sin que se necesite especificar la extensión.
-
-
-* messages: 
-Un array que contiene los mensajes del chat, tanto del asistente, como del usuario.
-Cada mensaje es un objeto con dos propiedades:
-
-  messages = [{ 
-              role: 'user' o 'assistant'
-              content: 'El contenido varia en cada chat, pero hace referencia a el usuario o la respuesta del asistente' }];
-
-De esta forma se controla que contenido le corresponde a que rol.
-
-
-*OnInit y OnDestroy 
-se utilizan para ejecutar lógica en momentos específicos del ciclo de vida de un componente. 
-La interfaz OnInit define el método ngOnInit(), que es invocado por Angular justo después de que el componente ha sido inicializado.
-La interfaz OnDestroy define el método ngOnDestroy(), que es invocado por Angular justo antes de que el componente sea destruido o eliminado.
-
-
-*Los tres puntos ... Operador de propagación (spread operator)
-Son parte de JavaScript (ES6). El operador ... toma elementos todos los elementos de un array y permite combinarlos en otro.
-
-*\n 
-salto de linea
-
-
-
-
-
-*/
