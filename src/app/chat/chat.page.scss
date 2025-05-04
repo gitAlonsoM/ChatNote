@@ -1,135 +1,62 @@
 /* src/app/chat/chat.page.scss */
 
-/* Estilos para el ion-toolbar */
-ion-toolbar {
-  display: flex;
-  align-items: center;
-}
+@media (min-width: 550px) {
+  .chat-container {
+    max-width: 900px;
+    margin: 40px auto;
+    background: #f5f7fb; /* Fondo más suave */
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 80vh;
+  }
 
-/* Ajustes para los botones de la cabecera */
-ion-buttons[slot="start"],
-ion-buttons[slot="end"] {
-  flex: none;
-}
+  .chat-messages {
+    padding: 20px;
+    background: linear-gradient(135deg, #dee4f9, #f3e8ff); /* Azul claro + lila suave */
+    border-bottom: 1px solid #ccc;
+  }
 
-/* Ajustar el tamaño del logo */
-.logo-img {
-  height: 70px; /* Reducido para ahorrar espacio */
-}
+  .message-input-section {
+    background-color: #eef1f8; /* Gris azulado claro */
+    padding: 15px 20px;
+    border-top: 1px solid #ccc;
+  }
 
-/* Contenedor central del encabezado */
-.header-center {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center; /* Centra verticalmente el texto de estado */
-}
+  .action-buttons {
+    padding: 10px 20px;
+    background-color: #eef1f8;
+    border-top: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+  }
 
-/* Indicador y texto de conexión */
-.connection-indicator {
-  display: flex;
-  align-items: center;
-}
+  .user-message,
+  .bot-message {
+    max-width: 80%;
+    word-wrap: break-word;
+    font-size: 16px;
+  }
 
-.connection-status {
-  margin-left: 5px;
-  font-size: 16px; /* Texto más pequeño para ahorrar espacio */
-}
+  .user-message {
+    background-color: #cce5ff; /* Celeste claro */
+    color: #003366;
+    margin-left: auto;
+  }
 
-.green-light,
-.gray-light {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  margin-right: 5px;
-}
+  .bot-message {
+    background-color: #f3e8ff; /* Lila muy suave */
+    color: #4a3b78;
+    margin-right: auto;
+  }
 
-.green-light {
-  background-color: #12e712;
-}
-
-.gray-light {
-  background-color: #808080;
-}
-
-/* Estilos para el contenedor principal del chat */
-.chat-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%; /* Ocupa toda la altura disponible */
-}
-
-/* Área para los mensajes */
-.chat-messages {
-  flex: 1; /* Utiliza el espacio disponible */
-  overflow-y: auto;
-  padding: 10px;
-}
-
-/* Botones de acción */
-.action-buttons {
-  display: flex;
-  justify-content: flex-start; /* Alineación de los botones */
-  gap: 2px; /* Espacio entre los botones */
-  padding: 2px 6px; /* Ajuste de padding */
-  
-}
-
-.action-buttons ion-button {
-  font-size: 14px; /* Tamaño de la letra reducido */
-}
-
-/* Sección de entrada de mensajes */
-.message-input-section {
-  display: flex;
-  align-items: center;
-  padding: 5px 10px; /* Ajuste de padding */
-  border-top: 1px solid #ccc; /* Línea divisoria */
-}
-
-.message-input-section ion-input {
-  flex: 1; /* El input utiliza todo el espacio disponible */
-}
-
-.message-input-section ion-button {
-  margin-left: 10px; /* Espacio entre el input y el botón */
-}
-
-/* Estilos para los mensajes del usuario y del bot */
-.user-message,
-.bot-message {
-  padding: 8px;
-  border-radius: 15px;
-  margin: 5px 0; /* Espacio entre mensajes */
-}
-
-.user-message {
-  background-color: #dcf1cd; /* Verde claro para mensajes del usuario */
-  text-align: right;
-  color: black;
-}
-
-.bot-message {
-  background-color: #fff; /* Blanco para mensajes del asistente */
-  text-align: left;
-  color: black;
-}
-
-/* Mensaje de éxito */
-.success-message {
-  position: fixed;
-  top: 56px; /* Justo debajo del header */
-  right: 10px;
-  background-color: #28a745; /* Verde */
-  color: #fff;
-  padding: 8px;
-  z-index: 100;
-}
-
-/* Eliminación de scroll en el body */
-body, html {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  overflow: hidden; /* Previene el desplazamiento en toda la página */
+  .success-message {
+    top: 70px;
+    right: 20px;
+    font-size: 14px;
+    background-color: #4caf50;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
 }
