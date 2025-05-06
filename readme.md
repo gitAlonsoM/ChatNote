@@ -98,13 +98,6 @@ PS ChatNote_IONIC> Show-Tree -Path $root
 │   │   │   └── home.page.spec.ts
 │   │   │   └── home.page.ts
 │   │   │   └── home-routing.module.ts
-│   │   ├── libreta
-│   │   │   └── libreta.module.ts
-│   │   │   └── libreta.page.html
-│   │   │   └── libreta.page.scss
-│   │   │   └── libreta.page.spec.ts
-│   │   │   └── libreta.page.ts
-│   │   │   └── libreta-routing.module.ts
 │   │   ├── login
 │   │   │   └── login.module.ts
 │   │   │   └── login.page.html
