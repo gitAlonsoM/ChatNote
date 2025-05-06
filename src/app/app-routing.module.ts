@@ -31,13 +31,7 @@ const routes: Routes = [
   },
 
   // Ruta de libreta (protegida con autenticación)
-  {
-    path: 'libreta',
-    loadChildren: () =>
-      import('./libreta/libreta.module').then((m) => m.LibretaPageModule),
-    canActivate: [AuthGuard], // Protegida por autenticación
-  },
-
+  // Borrado el modulo de libreta
   // Ruta para recuperación de contraseña
   {
     path: 'recover-key',

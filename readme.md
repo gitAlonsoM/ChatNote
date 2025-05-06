@@ -1,17 +1,32 @@
-# Aplicación "Libreta + Chat con LLM"
-## Descripción
-Esta aplicación permite a los usuarios interactuar con un modelo de lenguaje (LLM) a través de un chat y gestionar sus tareas personales.
-Ha sido desarrollada utilizando Ionic, Angular y Firebase, soportando funcionalidades en dispositivos móviles y navegadores web.
+Descripción de la Aplicación “Chat Note”
 
+“Chat Note” es una plataforma híbrida móvil y web diseñada para gestionar, organizar y colaborar sobre notas y archivos de forma inteligente y en tiempo real. Sus principales objetivos son:
 
-## Páginas y Componentes principales
-1. **Login**: Página de autenticación de usuarios.
-2. **Creación de Cuenta**: Formulario para el registro de nuevos usuarios mediante un email único y una contraseña.
-3. **Chat**: Interfaz de chat con el LLM.
-4. **Libreta**: Página para gestionar tareas con funcionalidades CRUD (Crear, Leer, Actualizar, Eliminar). Incluye soporte para imágenes asociadas a tareas.
-5. **Otras Páginas**:
-   - Recuperación de contraseña.
-   - Información de contacto en "¿Quiénes somos?".
+Ingreso Conversacional: Permite a usuarios escribir ideas, apuntes y adjuntar documentos directamente desde una interfaz de chat, simulando una conversación fluida.
+
+Clasificación Automática: Utiliza lógica de backend para analizar contenido y asignar cada nota a carpetas temáticas predefinidas o personalizables, reduciendo esfuerzos manuales.
+
+Colaboración en Equipo: Ofrece espacios compartidos donde se pueden invitar colaboradores, participar en chats grupales, asignar notas como tareas, y mantener un historial sincronizado para múltiples dispositivos.
+
+Seguridad y Confiabilidad: Implementa encriptación en tránsito y reposo, cumple normativas de protección de datos, y genera registros de auditoría para administradores.
+
+Notificaciones y Recordatorios: Integra un sistema de alertas y recordatorios configurables para mantener a los usuarios informados de actualizaciones relevantes y plazos importantes.
+
+Tecnologías Principales
+
+Ionic & Firebase (Frontend móvil/web):
+
+Ionic para desarrollar la interfaz híbrida, asegurando responsividad y acceso multiplataforma.
+
+Firebase Authentication y Firestore para login, gestión de usuarios, sesiones y sincronización en tiempo real.
+
+Django (Backend):
+
+Gestiona la lógica de negocio: clasificación automática, control de sesiones, políticas de seguridad y API REST para la comunicación con el cliente.
+
+Oracle SQL (Base de Datos):
+
+Almacena de forma estructurada la información permanente: historias de usuario, logs de auditoría, configuraciones de carpetas y recordatorios.
 
 
 # ======================================================================================
@@ -21,73 +36,126 @@ El proyecto sigue una estructura típica de una aplicación Angular con Ionic. A
 ## Estructura del Proyecto
 
 myApp/
-│
-├── .angular/
-├── .vscode/
-├── android/ # Proyecto nativo de Android generado por Capacitor
-├── node_modules/ # Dependencias instaladas del proyecto
-├── src/ # Código fuente del proyecto
-│ ├── app/ # Contiene todas las páginas, componentes y servicios de la app
-│ │ ├── chat/ # Código de la página de chat y servicios relacionados con LLM
-│ │ ├── connection-status/ # Componente que gestiona el estado de conexión
-│ │ ├── guards/ # Control de acceso a páginas protegidas
-│ │ ├── libreta/ # Página con CRUD implementado para tareas
-│ │ ├── login/ # Página de autenticación de usuarios
-│ │ ├── quienes-somos/ # Información de contacto de la app
-│ │ ├── recover-key/ # Recuperación de contraseñas
-│ │ ├── register/ # Registro de nuevos usuarios
-│ │ ├── services/ # Servicios:
-│ │ │ ├── auth.service.ts # Manejo de autenticación
-│ │ │ ├── task.service.ts # CRUD de tareas
-│ │ │ ├── geolocation.service.ts # Servicio de geolocalización para obtener ubicación del usuario
-│ │ ├── app-routing.module.ts # Configuración de rutas de la aplicación
-│ │ ├── app.component.html # Template principal de la app
-│ │ ├── app.module.ts # Módulo principal del proyecto
-│ │
-│ ├── assets/ # Recursos estáticos como imágenes e íconos
-│ ├── environments/ # Configuración para producción/desarrollo
-│ ├── theme/ # Estilos SCSS globales
-│ ├── global.scss # Estilos generales adicionales
-│ ├── index.html # Archivo principal HTML del proyecto
-│
-├── www/ # Archivos web compilados listos para el proyecto nativo
-├── angular.json # Configuración del proyecto Angular
-├── capacitor.config.ts # Configuración específica de Capacitor
-├── ionic.config.json # Configuración de Ionic
-├── package.json # Scripts y dependencias del proyecto
-├── readme.md # Archivo de documentación actualizado
-├── tsconfig.json # Configuración de TypeScript
-
+PS ChatNote_IONIC> Show-Tree -Path $root
+└── .browserslistrc
+└── .editorconfig
+└── ALONSO.MD
+└── capacitor.config.ts
+└── github.md
+└── karma.conf.js
+└── NewFeaturesAlonso.md
+└── otros.md
+└── readme.md
+├── .angular
+│   ├── cache
+│   │   ├── 18.2.7
+├── src
+│   └── global.scss
+│   └── index.html
+│   └── main.ts
+│   └── polyfills.ts
+│   └── test.ts
+│   └── zone-flags.ts
+│   ├── app
+│   │   └── app.component.html
+│   │   └── app.component.scss
+│   │   └── app.component.spec.ts
+│   │   └── app.component.ts
+│   │   └── app.module.ts
+│   │   └── app-routing.module.ts
+│   │   ├── chat
+│   │   │   └── chat.module.ts
+│   │   │   └── chat.page.html
+│   │   │   └── chat.page.scss
+│   │   │   └── chat.page.spec.ts
+│   │   │   └── chat.page.ts
+│   │   │   └── chat.service.spec.ts
+│   │   │   └── chat.service.ts
+│   │   │   └── chat-routing.module.ts
+│   │   │   └── chat-storage.service.spec.ts
+│   │   │   └── chat-storage.service.ts
+│   │   │   ├── custom-instruction
+│   │   │   │   └── custom-instruction.module.ts
+│   │   │   │   └── custom-instruction.page.html
+│   │   │   │   └── custom-instruction.page.scss
+│   │   │   │   └── custom-instruction.page.spec.ts
+│   │   │   │   └── custom-instruction.page.ts
+│   │   │   │   └── custom-instruction.service.spec.ts
+│   │   │   │   └── custom-instruction.service.ts
+│   │   │   │   └── custom-instruction-routing.module.ts
+│   │   ├── connection-status
+│   │   │   └── connection-status.component.html
+│   │   │   └── connection-status.component.scss
+│   │   │   └── connection-status.component.spec.ts
+│   │   │   └── connection-status.component.ts
+│   │   ├── guards
+│   │   │   └── auth.guard.spec.ts
+│   │   │   └── auth.guard.ts
+│   │   ├── home
+│   │   │   └── home.module.ts
+│   │   │   └── home.page.html
+│   │   │   └── home.page.scss
+│   │   │   └── home.page.spec.ts
+│   │   │   └── home.page.ts
+│   │   │   └── home-routing.module.ts
+│   │   ├── libreta
+│   │   │   └── libreta.module.ts
+│   │   │   └── libreta.page.html
+│   │   │   └── libreta.page.scss
+│   │   │   └── libreta.page.spec.ts
+│   │   │   └── libreta.page.ts
+│   │   │   └── libreta-routing.module.ts
+│   │   ├── login
+│   │   │   └── login.module.ts
+│   │   │   └── login.page.html
+│   │   │   └── login.page.scss
+│   │   │   └── login.page.spec.ts
+│   │   │   └── login.page.ts
+│   │   │   └── login-routing.module.ts
+│   │   ├── quienes-somos
+│   │   │   └── quienes-somos.module.ts
+│   │   │   └── quienes-somos.page.html
+│   │   │   └── quienes-somos.page.scss
+│   │   │   └── quienes-somos.page.spec.ts
+│   │   │   └── quienes-somos.page.ts
+│   │   │   └── quienes-somos-routing.module.ts
+│   │   ├── recover-key
+│   │   │   └── recover-key.module.ts
+│   │   │   └── recover-key.page.html
+│   │   │   └── recover-key.page.scss
+│   │   │   └── recover-key.page.spec.ts
+│   │   │   └── recover-key.page.ts
+│   │   │   └── recover-key-routing.module.ts
+│   │   ├── register
+│   │   │   └── register.module.ts
+│   │   │   └── register.page.html
+│   │   │   └── register.page.scss
+│   │   │   └── register.page.spec.ts
+│   │   │   └── register.page.ts
+│   │   │   └── register-routing.module.ts
+│   │   ├── services
+│   │   │   └── auth.service.spec.ts
+│   │   │   └── auth.service.ts
+│   │   │   └── geolocation.service.ts
+│   │   │   └── task.service.spec.ts
+│   │   │   └── task.service.ts
+│   ├── assets
+│   │   └── shapes.svg
+│   │   ├── icon
+│   │   │   └── favicon.png
+│   │   ├── images
+│   │   │   └── gmail.png
+│   │   │   └── instagram.png
+│   │   │   └── logo.png
+│   │   │   └── Whatsapp.png
+│   ├── environments
+│   │   └── environment.prod.ts
+│   │   └── environment.ts
+│   ├── theme
+│   │   └── variables.scss
+PS C:\Users\alonm\Desktop\ChatNote_IONIC>
 
 # ======================================================================================
-
-## Funcionalidades Implementadas
-- **Gestión de tareas con CRUD**: Crear, editar y eliminar tareas almacenadas localmente utilizando **Capacitor Preferences** y **from '@ionic/storage-angular** para garantizar la persistencia de los datos, incluso después de cerrar la aplicación.
-- **Fotografías en tareas**: Adjuntar imágenes tomadas con la cámara o seleccionadas desde la galería (en dispositivos móviles).
-- **Geolocalización**: Enviar la ubicación actual al LLM para obtener el nombre del lugar.
-- **Autenticación**: Registro, inicio y recuperación de contraseña con Firebase.
-- **Interacción con el LLM**:
-  - Envío de tareas acumuladas para retroalimentación.
-  - Generación de respuestas contextuales personalizadas.
-
-
-
-## Funcionalidades del LLM
-La aplicación utiliza un modelo de lenguaje (LLM) de OpenAI para interactuar con los usuarios en un chat. Las funciones implementadas incluyen:
-- **Generación de Respuestas**: El LLM crea respuestas contextuales basadas en los mensajes del usuario.
-- **Personalización**: Se ha configurado un *prompt customizable*.
-- **Envio de tareas**: Se ha activado un boton en el chat para enviarle todas las tareas acumuladas en la libreta, y obtener feedback inmediato del LLM segun las tareas almacenadas.
-
-
-## Funcionalidades Nativas
-- **Cámara y galería**: Integración con la API de cámara de Capacitor. **from '@capacitor/camera'**
-- **GPS**: Uso de la API de geolocalización de Capacitor para obtener coordenadas, mediante **from '@capacitor/       geolocation'**
-
-
-
-## Futuras Funcionalidades
-- **Guardado de tareas con LLM**: El sistema LLM podrá guardar tareas de forma automatizada a petición del usuario, agregándolas a la libreta con un formato y horario predefinidos.
-- **Tareas con Horario de Notificación**: Cada tarea podrá tener un horario de notificación asignado, y el celular activará la notificación en el horario acordado.
 
 
 # ======================================================================================
