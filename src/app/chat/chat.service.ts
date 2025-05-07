@@ -14,7 +14,7 @@ import { AuthService } from '../services/auth.service';  // DEBUG: import AuthSe
 
 export class ChatService {
 
-   private readonly _defaultPrompt: string = `
+private readonly _defaultPrompt: string = `
 Eres una asistente virtual experta en organizar tareas y responder consultas. 
 Tu comportamiento se divide en dos modos:
 

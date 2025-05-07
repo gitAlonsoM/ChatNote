@@ -1,32 +1,143 @@
-Descripción de la Aplicación “Chat Note”
+# ======================================================================================
+# OVERVIEW IONIC
 
-“Chat Note” es una plataforma híbrida móvil y web diseñada para gestionar, organizar y colaborar sobre notas y archivos de forma inteligente y en tiempo real. Sus principales objetivos son:
+Qué hace Ionic en esta aplicación
+Interfaz híbrida (móvil + web):
+Usa Ionic Framework junto con Angular para construir una SPA que funciona en navegador y en dispositivos nativos (Android/iOS) vía Capacitor.
 
-Ingreso Conversacional: Permite a usuarios escribir ideas, apuntes y adjuntar documentos directamente desde una interfaz de chat, simulando una conversación fluida.
+Autenticación y sincronización:
+Integra Firebase Auth (con @angular/fire) para manejar el registro, login y estado de sesión del usuario.
 
-Clasificación Automática: Utiliza lógica de backend para analizar contenido y asignar cada nota a carpetas temáticas predefinidas o personalizables, reduciendo esfuerzos manuales.
+Comunicación con el backend Django:
+A través de HTTP (Angular HttpClient en navegador y @capacitor-community/http en dispositivos móviles), envía mensajes y datos (UID, email, chat) a los endpoints /api/register/ y /api/llm/.
 
-Colaboración en Equipo: Ofrece espacios compartidos donde se pueden invitar colaboradores, participar en chats grupales, asignar notas como tareas, y mantener un historial sincronizado para múltiples dispositivos.
+Almacenamiento local de chats:
+Con @ionic/storage-angular, guarda y recupera el historial de mensajes para continuidad de la conversación incluso sin red.
 
-Seguridad y Confiabilidad: Implementa encriptación en tránsito y reposo, cumple normativas de protección de datos, y genera registros de auditoría para administradores.
+Funcionalidades nativas vía Capacitor:
 
-Notificaciones y Recordatorios: Integra un sistema de alertas y recordatorios configurables para mantener a los usuarios informados de actualizaciones relevantes y plazos importantes.
+Geolocalización: @capacitor/geolocation para obtener coordenadas.
 
-Tecnologías Principales
+Cámara, Haptics, Keyboard, App, StatusBar… plugins listados pero de uso futuro (ej. adjuntar archivo, enviar audio).
 
-Ionic & Firebase (Frontend móvil/web):
+Ruteo y protección de rutas:
+Define rutas lazy-loaded para login, register, chat, recover-key, quienes-somos, con un AuthGuard donde corresponde.
 
-Ionic para desarrollar la interfaz híbrida, asegurando responsividad y acceso multiplataforma.
+Dependencias principales (extracto de package.json)
+Paquete	Propósito
+@ionic/angular (^8.0.0)	Componentes UI nativos híbridos
+@angular/core, @angular/router, etc.	Framework web, ruteo y lógica de la SPA
+@capacitor/core, @capacitor/android…	Ecosistema Capacitor para acceder a APIs nativas
+@ionic/storage-angular (^4.0.0)	Almacenamiento clave-valor en dispositivos
+@angular/fire (^18.0.1)	Integración con Firebase App y Auth
+rxjs (~7.8.0)	Manejo reactivo de datos y eventos
+socket.io (^4.8.0), express (^4.21.0)	Instalados pero no referenciados directamente en el código
 
-Firebase Authentication y Firestore para login, gestión de usuarios, sesiones y sincronización en tiempo real.
+Archivos más relevantes y su rol
+(Todas las rutas son relativas al directorio raíz de ChatNote_IONIC)
 
-Django (Backend):
+package.json
 
-Gestiona la lógica de negocio: clasificación automática, control de sesiones, políticas de seguridad y API REST para la comunicación con el cliente.
+URL: /package.json
 
-Oracle SQL (Base de Datos):
+Lista dependencias, scripts (start, build, test, lint) y versiones usadas en el frontend.
 
-Almacena de forma estructurada la información permanente: historias de usuario, logs de auditoría, configuraciones de carpetas y recordatorios.
+capacitor.config.ts
+
+URL: /capacitor.config.ts
+
+Define la appId (io.ionic.starter), appName (ChatBook) y el directorio web de compilación (www).
+
+src/app/app.module.ts
+
+URL: /src/app/app.module.ts
+
+Imports globales:
+
+IonicModule.forRoot()
+
+IonicStorageModule.forRoot() (persistencia local)
+
+HttpClientModule (API REST)
+
+Firebase (provideFirebaseApp, provideAuth)
+
+BrowserAnimationsModule
+
+Providers:
+
+IonicRouteStrategy para reuse de rutas.
+
+src/app/app-routing.module.ts
+
+URL: /src/app/app-routing.module.ts
+
+Define rutas lazy-loaded para páginas clave:
+
+/register → RegisterPageModule
+
+/login → LoginPageModule
+
+/chat → ChatPageModule
+
+/recover-key, /quienes-somos
+
+Redirección por defecto a /login.
+
+src/environments/environment.ts
+
+URL: /src/environments/environment.ts
+
+Configuración de Firebase para desarrollo (API key, projectId, etc.).
+
+src/environments/environment.prod.ts
+
+URL: /src/environments/environment.prod.ts
+
+Misma configuración de Firebase para producción, con production: true.
+
+src/app/chat/chat.page.ts
+
+URL: /src/app/chat/chat.page.ts
+
+Lógica de la UI de chat:
+
+Inyección de ChatService, AuthService, ChatStorageService, GeolocationService.
+
+Envía/recibe mensajes, despliega notificaciones, desplaza scroll.
+
+Usa el storage para persistir y recuperar el historial de chat.
+
+Obtiene coordenadas con GeolocationService y las envía al LLM.
+
+src/app/chat/chat.service.ts
+
+URL: /src/app/chat/chat.service.ts
+
+Orquesta llamadas al backend Django:
+
+En navegador via HttpClient.post(...).
+
+En dispositivo híbrido via @capacitor-community/http.
+
+Construye payload con uid, email y system prompt para el LLM.
+
+Endpoint hardcodeado: http://127.0.0.1:8000/api/llm/.
+
+Interdependencias y conexiones
+Ionic UI ↔ Angular: todo el routing y módulos se gestionan con Angular, Ionic aporta componentes visuales (ion-button, ion-input, etc.).
+
+AppModule ↔ Plugins nativos: IonicModule, IonicStorageModule y los plugins de Capacitor se configuran en el módulo raíz.
+
+ChatService ↔ AuthService: obtiene uid y email del usuario actual para incluirlos en cada petición al LLM.
+
+ChatPage ↔ ChatStorageService: persiste mensajes localmente para offline y recarga de la app.
+
+Capacitor plugins ↔ Código Angular:
+
+GeolocationService invoca el plugin nativo para coordenadas.
+
+En futuro, podrían usarse Camera, Haptics, etc., desde la UI.
 
 
 # ======================================================================================
@@ -130,8 +241,6 @@ PS ChatNote_IONIC> Show-Tree -Path $root
 │   │   │   └── auth.service.spec.ts
 │   │   │   └── auth.service.ts
 │   │   │   └── geolocation.service.ts
-│   │   │   └── task.service.spec.ts
-│   │   │   └── task.service.ts
 │   ├── assets
 │   │   └── shapes.svg
 │   │   ├── icon
@@ -152,11 +261,6 @@ PS C:\Users\alonm\Desktop\ChatNote_IONIC>
 
 
 # ======================================================================================
-
-## Inicia el Servidor de Desarrollo con Ionic
-Para iniciar el servidor de desarrollo y probar la aplicación en un navegador, utiliza el siguiente comando:
-ionic serve
-
 
 ## Dependencias Clave
 Ionic: Framework para construir aplicaciones móviles y web híbridas.
