@@ -21,11 +21,7 @@ import { ViewChild, ElementRef } from '@angular/core';
 
 export class ChatPage implements OnInit, OnDestroy {
 
-   //NEW SCROLL - Agregar ViewChild para el contenedor de mensajes
    @ViewChild('chatMessages', { static: false }) chatMessages!: ElementRef;
-
-   //NEW SCROLL - Fin ViewChild
-
 
   //Propiedades de la clase
   userMessage: string = '';
@@ -52,7 +48,6 @@ export class ChatPage implements OnInit, OnDestroy {
   ) {}
 
 
-  //NEW SCROLL - Método para desplazar el scroll al final
   private scrollToBottom(): void {
     setTimeout(() => {
       if(this.chatMessages) {
@@ -60,99 +55,67 @@ export class ChatPage implements OnInit, OnDestroy {
       }
     }, 100);
   }
-  //NEW SCROLL - Fin método
   
 
-  async sendLocation() {
-    try {
-      const coords = await this.geolocationService.getCurrentPosition();
-      const locationMessage = `Mis coordenadas son: ${coords.latitude}, ${coords.longitude}. ¿Puedes decirme en qué ciudad y país me encuentro basado en estas coordenadas?`;
-      console.log(locationMessage); // Debugging
+async sendLocation() {
+  try {
+    const { latitude, longitude } = await this.geolocationService.getCurrentPosition();
+    const content = `Mis coordenadas son: ${latitude}, ${longitude}. ¿Puedes decirme en qué ciudad y país me encuentro?`;
 
-      // Agrega el mensaje al array de chat para que se muestre en la interfaz de usuario el mensaje "enviado ubicacion"
-      this.messages.push({ role: 'user', content: 'Enviando ubicación...' });
-      //NEW CHAT STORE
-      this.chatStorageService.saveMessages(this.messages);
-      //NEW CHAT STORE
-      // Prepara el mensaje para el formato esperado por sendMessageToLLM
-      const messageToSend = [
-        {
-          role: 'user',
-          content: locationMessage,
-        },
-      ];
+    // Mensaje de usuario y persistencia
+    this.messages.push({ role: 'user', content: 'Enviando ubicación...' });
+    this.chatStorageService.saveMessages(this.messages);
 
-      // Envía el mensaje al LLM y espera la respuesta
-      this.chatService.sendMessageToLLM(this.messages).subscribe(
-        (response) => {
-          let botReplyContent: string = '';
-      
-          // Verificar si la respuesta incluye tareas (la API retorna { tasks: [...] } en lugar de choices)
-          if (response.tasks) {
-            // Formatear las tareas en un mensaje
-            botReplyContent = 'Tareas obtenidas:\n';
-            response.tasks.forEach((task: any, index: number) => {
-              botReplyContent += `Tarea ${index + 1}: ${task.titulo} - ${task.descripcion}\n`;
-            });
-          } else {
-            // Si no se reciben tareas, se procesa la respuesta normal del LLM
-            if (this.platform.is('hybrid')) {
-              // Entorno nativo
-              const responseData = response.data;
-              console.log('Respuesta del LLM:', responseData);
-              if (responseData && responseData.choices && responseData.choices.length > 0) {
-                botReplyContent = responseData.choices[0].message.content;
-              } else {
-                botReplyContent = 'Error al interpretar la respuesta del LLM.';
-              }
-            } else {
-              // En el navegador
-              console.log('Respuesta del LLM:', response);
-              if (response && response.choices && response.choices.length > 0) {
-                botReplyContent = response.choices[0].message.content;
-              } else {
-                botReplyContent = 'Error al interpretar la respuesta del LLM.';
-              }
-            }
-          }
-      
-          // Agregar la respuesta (ya sea las tareas o la respuesta normal) al array de mensajes
-          this.messages.push({ role: 'assistant', content: botReplyContent });
-          this.scrollToBottom();
-        },
-        (error) => {
-          console.error('Error enviando mensaje al LLM', error);
-          this.messages.push({
-            role: 'assistant',
-            content: 'Error al comunicarse con el LLM.',
-          });
-          this.scrollToBottom();
+    // Envío al LLM
+    this.chatService.sendMessageToLLM([{ role: 'user', content }]).subscribe(
+      res => {
+        // INSERT
+        if (res.action === 'INSERT') {
+          this.messages.push({ role: 'assistant', content: `✅ Task added: "${res.titulo}"` });
+
+        // READ tasks
+        } else if (res.tasks) {
+          const list = res.tasks
+            .map((t: any, i: number) => `${i+1}. ${t.titulo} - ${t.descripcion}`)
+            .join('\n');
+          this.messages.push({ role: 'assistant', content: `Tareas:\n${list}` });
+
+        // Conversación normal
+        } else {
+          const data = this.platform.is('hybrid') ? res.data : res;
+          const reply = data.choices?.[0]?.message.content 
+                        || 'No pude procesar tu respuesta.';
+          this.messages.push({ role: 'assistant', content: reply });
         }
-      );
 
+        // Guardar y scrollear
+        this.chatStorageService.saveMessages(this.messages);
+        this.scrollToBottom();
+      },
+      err => {
+        this.messages.push({ role: 'assistant', content: 'Error comunicándose con el LLM.' });
+        this.scrollToBottom();
+      }
+    );
 
-
-    } catch (error) {
-      console.error('Error obteniendo la ubicación:', error);
-      this.messages.push({
-        role: 'assistant',
-        content:
-          'No se pudo obtener la ubicación. Asegúrate de haber otorgado los permisos necesarios.',
-      });
-    }
+  } catch {
+    this.messages.push({
+      role: 'assistant',
+      content: 'No se pudo obtener la ubicación. Verifica permisos.'
+    });
   }
+}
+
 
 
 
   ngOnInit() {
-
      //NEW CHAT STORE
     this.chatStorageService.loadMessages().then((savedMessages: ChatMessage[]) => {
       if (savedMessages.length > 0) {
         this.messages = savedMessages;
       }
     });
-     //NEW CHAT STORE 
     this.authSubscription = this.authService.isLoggedIn$.subscribe(
       (isLoggedIn) => {
         this.isLoggedIn = isLoggedIn;
@@ -179,19 +142,32 @@ export class ChatPage implements OnInit, OnDestroy {
       this.scrollToBottom();
   
       this.chatService.sendMessageToLLM(this.messages).subscribe(
-        (response) => {
-          let botReplyContent: string = '';
+       (response: any) => {
+              console.log('DEBUG: response in sendMessage', response);
+              if (response.action === 'INSERT') {
+                console.log('DEBUG: INSERT action received', response);
+                const confirmation = `✅ Note added successfully: "${response.contenido}"`;  // use 'contenido'
+                this.messages.push({ role: 'assistant', content: confirmation });
+                this.chatStorageService.saveMessages(this.messages);
+                this.scrollToBottom();
+                this.userMessage = '';
+                return;
+              }
+  
+              let botReplyContent: string = '';
   
           // Si la respuesta contiene tareas, formatearlas y actualizamos el system prompt
-          if (response.tasks) {
-            botReplyContent = 'Tareas obtenidas:\n';
-            response.tasks.forEach((task: any, index: number) => {
-              botReplyContent += `Tarea ${index + 1}: ${task.titulo} - ${task.descripcion}\n`;
-            });
-            // Actualizamos el system prompt para que el LLM "conozca" las tareas
-            this.chatService.updateSystemPrompt("Tareas actuales:\n" + botReplyContent);
-          } else {
-            // Resto de la lógica para respuesta normal del LLM
+          if (response.notes) {
+            botReplyContent = response.notes
+              .map((n: any) => `${n.nota_id}. ${n.contenido}`)  // format "ID. content"
+              .join('\n');
+            this.messages.push({ role: 'assistant', content: botReplyContent });
+            this.chatStorageService.saveMessages(this.messages);
+            this.scrollToBottom();
+            return;
+          }
+          // ====
+           else {
             if (this.platform.is('hybrid')) {
               const responseData = response.data;
               console.log('Respuesta del LLM:', responseData);
@@ -248,12 +224,10 @@ export class ChatPage implements OnInit, OnDestroy {
     }, 3000);
   }
   
-  //NEW CHAT STORE 
   clearChat(): void {
     this.messages = [{ role: 'assistant', content: 'Hola, ¿En qué puedo ayudarte?' }];
     this.chatStorageService.clearMessages();
   }
-  //NEW CHAT STORE 
 
 
 }
