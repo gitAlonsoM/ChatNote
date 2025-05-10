@@ -12,7 +12,7 @@
     </ion-header>
     <ion-content>
       <ion-list>
-       <!--  <ion-item button routerLink="/libreta">
+        <!--  <ion-item button routerLink="/libreta">
           <ion-icon slot="start" name="book-outline"></ion-icon>
           <ion-label>Libreta</ion-label> 
         </ion-item> -->
@@ -26,11 +26,11 @@
         </ion-item> -->
         <ion-item button routerLink="/quienes-somos">
           <ion-icon slot="start" name="information-circle-outline"></ion-icon>
-          <ion-label>Quiénes somos</ion-label> 
+          <ion-label>Quiénes somos</ion-label>
         </ion-item>
         <ion-item button routerLink="/login">
           <ion-icon slot="start" name="log-in-outline"></ion-icon>
-          <ion-label>Login</ion-label> 
+          <ion-label>Login</ion-label>
         </ion-item>
         <ion-item button (click)="logout()" *ngIf="isLoggedIn">
           <ion-icon slot="start" name="log-out-outline"></ion-icon>
@@ -38,8 +38,20 @@
         </ion-item>
       </ion-list>
     </ion-content>
-  </ion-menu>
 
+    <ion-item button (click)="openCreateFolderModal()">
+      <ion-icon slot="start" name="folder-outline"></ion-icon>
+      <ion-label>Crear Carpeta</ion-label>
+    </ion-item>
+    <ion-item
+  *ngFor="let carpeta of carpetas"
+  button
+  [routerLink]="['/carpetas', carpeta.id]"
+>
+  <ion-icon slot="start" name="folder-open-outline"></ion-icon>
+  <ion-label>{{ carpeta.nombre }}</ion-label>
+</ion-item>
+  </ion-menu>
 
   <!-- Menú para la vista de Libreta -->
   <ion-menu side="end" menuId="libretaMenu" contentId="main-content">
@@ -50,7 +62,7 @@
     </ion-header>
     <ion-content>
       <ion-list>
-       <!--  <ion-item button routerLink="/libreta">
+        <!--  <ion-item button routerLink="/libreta">
           <ion-icon slot="start" name="book-outline"></ion-icon>
           <ion-label>Libreta</ion-label> 
         </ion-item> -->
@@ -60,11 +72,11 @@
         </ion-item>
         <ion-item button routerLink="/quienes-somos">
           <ion-icon slot="start" name="information-circle-outline"></ion-icon>
-          <ion-label>Quiénes somos</ion-label> 
+          <ion-label>Quiénes somos</ion-label>
         </ion-item>
         <ion-item button routerLink="/login">
           <ion-icon slot="start" name="log-in-outline"></ion-icon>
-          <ion-label>Login</ion-label> 
+          <ion-label>Login</ion-label>
         </ion-item>
         <ion-item button (click)="logout()" *ngIf="isLoggedIn">
           <ion-icon slot="start" name="log-out-outline"></ion-icon>
@@ -74,77 +86,69 @@
     </ion-content>
   </ion-menu>
 
-
-    <!-- Menú para la vista de quienes somos -->
-    <ion-menu side="end" menuId="quienesSomosMenu" contentId="main-content">
-      <ion-header>
-        <ion-toolbar color="primary">
-          <ion-title>Menú</ion-title>
-        </ion-toolbar>
-      </ion-header>
-      <ion-content>
-        <ion-list>
-          <!-- <ion-item button routerLink="/libreta">
+  <!-- Menú para la vista de quienes somos -->
+  <ion-menu side="end" menuId="quienesSomosMenu" contentId="main-content">
+    <ion-header>
+      <ion-toolbar color="primary">
+        <ion-title>Menú</ion-title>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content>
+      <ion-list>
+        <!-- <ion-item button routerLink="/libreta">
             <ion-icon slot="start" name="book-outline"></ion-icon>
             <ion-label>Libreta</ion-label> 
           </ion-item> -->
-          <ion-item button routerLink="/chat">
-            <ion-icon slot="start" name="chatbubbles-outline"></ion-icon>
-            <ion-label>Chat</ion-label>
-          </ion-item>
-          <!-- <ion-item button routerLink="/quienes-somos">
+        <ion-item button routerLink="/chat">
+          <ion-icon slot="start" name="chatbubbles-outline"></ion-icon>
+          <ion-label>Chat</ion-label>
+        </ion-item>
+        <!-- <ion-item button routerLink="/quienes-somos">
             <ion-icon slot="start" name="information-circle-outline"></ion-icon>
             <ion-label>Quiénes somos</ion-label> 
           </ion-item> -->
-          <ion-item button routerLink="/login">
-            <ion-icon slot="start" name="log-in-outline"></ion-icon>
-            <ion-label>Login</ion-label> 
-          </ion-item>
-          <ion-item button (click)="logout()" *ngIf="isLoggedIn">
-            <ion-icon slot="start" name="log-out-outline"></ion-icon>
-            <ion-label>Desconectarse</ion-label>
-          </ion-item>
-        </ion-list>
-      </ion-content>
-    </ion-menu>
+        <ion-item button routerLink="/login">
+          <ion-icon slot="start" name="log-in-outline"></ion-icon>
+          <ion-label>Login</ion-label>
+        </ion-item>
+        <ion-item button (click)="logout()" *ngIf="isLoggedIn">
+          <ion-icon slot="start" name="log-out-outline"></ion-icon>
+          <ion-label>Desconectarse</ion-label>
+        </ion-item>
+      </ion-list>
+    </ion-content>
+  </ion-menu>
 
-
-    <!-- Menú para la vista de Custom Instruction -->
-<ion-menu side="end" menuId="customInstructionMenu" contentId="main-content">
-  <ion-header>
-    <ion-toolbar color="primary">
-      <ion-title>Menú</ion-title>
-    </ion-toolbar>
-  </ion-header>
-  <ion-content>
-    <ion-list>
-   <!--    <ion-item button routerLink="/libreta">
+  <!-- Menú para la vista de Custom Instruction -->
+  <ion-menu side="end" menuId="customInstructionMenu" contentId="main-content">
+    <ion-header>
+      <ion-toolbar color="primary">
+        <ion-title>Menú</ion-title>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content>
+      <ion-list>
+        <!--    <ion-item button routerLink="/libreta">
         <ion-icon slot="start" name="book-outline"></ion-icon>
         <ion-label>Libreta</ion-label>
       </ion-item> -->
-      <ion-item button routerLink="/chat">
-        <ion-icon slot="start" name="chatbubbles-outline"></ion-icon>
-        <ion-label>Chat</ion-label>
-      </ion-item>
-      <ion-item button routerLink="/quienes-somos">
-        <ion-icon slot="start" name="information-circle-outline"></ion-icon>
-        <ion-label>Quiénes somos</ion-label>
-      </ion-item>
-      <ion-item button routerLink="/login">
-        <ion-icon slot="start" name="log-in-outline"></ion-icon>
-        <ion-label>Login</ion-label>
-      </ion-item>
-      <ion-item button (click)="logout()" *ngIf="isLoggedIn">
-        <ion-icon slot="start" name="log-out-outline"></ion-icon>
-        <ion-label>Desconectarse</ion-label>
-      </ion-item>
-    </ion-list>
-  </ion-content>
-</ion-menu>
-
-
-
-    
-
-
+        <ion-item button routerLink="/chat">
+          <ion-icon slot="start" name="chatbubbles-outline"></ion-icon>
+          <ion-label>Chat</ion-label>
+        </ion-item>
+        <ion-item button routerLink="/quienes-somos">
+          <ion-icon slot="start" name="information-circle-outline"></ion-icon>
+          <ion-label>Quiénes somos</ion-label>
+        </ion-item>
+        <ion-item button routerLink="/login">
+          <ion-icon slot="start" name="log-in-outline"></ion-icon>
+          <ion-label>Login</ion-label>
+        </ion-item>
+        <ion-item button (click)="logout()" *ngIf="isLoggedIn">
+          <ion-icon slot="start" name="log-out-outline"></ion-icon>
+          <ion-label>Desconectarse</ion-label>
+        </ion-item>
+      </ion-list>
+    </ion-content>
+  </ion-menu>
 </ion-app>

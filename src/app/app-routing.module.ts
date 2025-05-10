@@ -14,7 +14,16 @@ const routes: Routes = [
     loadChildren: () =>
       import('./register/register.module').then((m) => m.RegisterPageModule),
   },
-
+{
+    path: 'carpetas',
+    loadChildren: () =>
+      import('./carpeta/carpeta.module').then(m => m.CarpetaPageModule)
+  },
+   {
+    path: 'carpetas/:id',
+    loadChildren: () =>
+      import('./carpeta/carpeta.module').then(m => m.CarpetaPageModule)
+  },
   // Ruta de login
   {
     path: 'login',
@@ -49,6 +58,11 @@ const routes: Routes = [
         (m) => m.QuienesSomosPageModule
       ),
   },
+  {
+    path: 'carpeta',
+    loadChildren: () => import('./carpeta/carpeta.module').then( m => m.CarpetaPageModule)
+  },
+
 ];
 
 @NgModule({

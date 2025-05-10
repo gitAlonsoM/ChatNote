@@ -13,11 +13,13 @@ import { getAuth, provideAuth } from '@angular/fire/auth';
 import { environment } from '../environments/environment';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicStorageModule } from '@ionic/storage-angular';
+import { CarpetaCreatePage } from './carpeta-create/carpeta-create.page'; 
 
 
 @NgModule({
   declarations: [
     AppComponent,
+    CarpetaCreatePage
    
   ],
   imports: [
