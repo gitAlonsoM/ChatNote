@@ -1,47 +1,49 @@
-<!-- myApp\src\app\register\register.page.html -->
 <ion-header>
   <ion-toolbar>
     <img class="logo-img" src="assets/images/logo.png" alt="ChatBook Logo" />
   </ion-toolbar>
 </ion-header>
 
-
 <ion-content>
-  <div class="register-container">
+  <div class="background-overlay">
+    <div class="register-container">
 
-    <ion-card class="card-register">
-      <ion-card-header>
-        <ion-card-title>Registrarse</ion-card-title>
-      </ion-card-header>
+      <ion-card class="card-register">
+        <ion-card-header>
+          <ion-card-title>Registrarse</ion-card-title>
+        </ion-card-header>
 
-      <ion-card-content>
+        <ion-card-content>
 
-        <ion-item>
-          <ion-label position="floating">Correo Electrónico</ion-label>
-          <ion-input type="email" [(ngModel)]="email"></ion-input>
-        </ion-item>
+          <ion-item>
+           <ion-label position="floating">Nombre</ion-label>
+           <ion-input type="nombre" [(ngModel)]="name"></ion-input>
+          </ion-item>
 
-        <ion-item>
-          <ion-label position="floating">Contraseña</ion-label>
-          <ion-input type="password" [(ngModel)]="password"></ion-input>
-        </ion-item>
+          <ion-item>
+            <ion-label position="floating">Correo Electrónico</ion-label>
+            <ion-input type="email" [(ngModel)]="email"></ion-input>
+          </ion-item>
 
-        <ion-item>
-          <ion-label position="floating">Confirmar Contraseña</ion-label>
-          <ion-input type="password" [(ngModel)]="confirmPassword"></ion-input>
-        </ion-item>
+          <ion-item>
+            <ion-label position="floating">Contraseña</ion-label>
+            <ion-input type="password" [(ngModel)]="password"></ion-input>
+          </ion-item>
 
-        <ion-button expand="block" (click)="register()">Crear Cuenta</ion-button>
-        <ion-button expand="block" fill="clear" (click)="goToLogin()">Volver al Login</ion-button>
-      
-      </ion-card-content>
-    </ion-card>
-    
+          <ion-item>
+            <ion-label position="floating">Confirmar Contraseña</ion-label>
+            <ion-input type="password" [(ngModel)]="confirmPassword"></ion-input>
+          </ion-item>
 
+          <ion-button expand="block" (click)="register()">Crear Cuenta</ion-button>
+          <ion-button expand="block" fill="clear" (click)="goToLogin()">Volver al Login</ion-button>
+
+        </ion-card-content>
+      </ion-card>
+
+    </div>
   </div>
 </ion-content>
-
-
 
 
 <!-- 

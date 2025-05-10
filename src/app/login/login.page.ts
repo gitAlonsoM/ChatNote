@@ -19,8 +19,6 @@ import { trigger, state, style, transition, animate } from '@angular/animations'
     ]),
   ]
 })
-
-
 export class LoginPage implements OnInit {
   email: string = '';
   password: string = '';
@@ -49,19 +47,14 @@ export class LoginPage implements OnInit {
         this.showMessage = false;
       }, 3000);
     }
+
     // Remover mensaje de invitado
     localStorage.removeItem('guestMessage');
 
-    
-    this.authService.isLoggedIn$.subscribe(isLoggedIn => {
-      if (isLoggedIn) {
-        this.router.navigate(['/chat']);
-      }
-    });
   
   }
-   
-// entrar como usuario autenticado
+
+  // entrar como usuario autenticado
   async login() {
     console.log('Email:', this.email);
     console.log('Password:', this.password);
@@ -108,7 +101,6 @@ export class LoginPage implements OnInit {
   }
 
   // entrar como invitado a la aplicacion
-
   async guestLogin() {
     this.isConnecting = true;
     const loading = await this.loadingController.create({

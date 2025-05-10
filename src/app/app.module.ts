@@ -10,15 +10,14 @@ import { AppRoutingModule } from './app-routing.module';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
 import { getAuth, provideAuth } from '@angular/fire/auth';
+import { getFirestore, provideFirestore } from '@angular/fire/firestore';  // ✅ Firestore agregado
 import { environment } from '../environments/environment';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicStorageModule } from '@ionic/storage-angular';
 
-
 @NgModule({
   declarations: [
     AppComponent,
-   
   ],
   imports: [
     BrowserModule,
@@ -34,8 +33,10 @@ import { IonicStorageModule } from '@ionic/storage-angular';
     provideFirebaseApp(() => initializeApp(environment.firebase)),
     // Inicializa la autenticación de Firebase
     provideAuth(() => getAuth()),
+    // ✅ Inicializa Firestore
+    provideFirestore(() => getFirestore()),
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   bootstrap: [AppComponent]
 })
-export class AppModule {} 
+export class AppModule {}

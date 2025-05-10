@@ -1,44 +1,41 @@
 <!-- myApp\src\app\recover-key\recover-key.page.html -->
 <ion-header>
   <ion-toolbar>
-    <!-- Logo de la aplicación -->
     <img class="logo-img" src="assets/images/logo.png" alt="ChatBook Logo" />
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
-  <!-- Contenedor principal de la página de recuperación de contraseña -->
-  <div class="container-recover">
-    
-    <!-- Card principal del contenido -->
-    <ion-card class="card-recover">
-      <ion-card-header>
-        <ion-card-title>Recuperar Contraseña</ion-card-title>
-      </ion-card-header>
+  <!-- Capa oscura encima del fondo -->
+  <div class="background-overlay">
+    <!-- Contenedor principal -->
+    <div class="container-recover">
 
-      <ion-card-content>
-        <!-- Formulario para enviar el correo de recuperación de cuenta -->
-        <form (ngSubmit)="sendRecoveryEmail()"> <!-- ngSubmit es una directiva de Angular que se usa en formularios para manejar el evento de envío (submit), el formulario activa la funcion "sendRecoveryEmail()" -->
-          
-          <!-- Campo para ingresar el correo electrónico -->
-          <ion-item>
-            <ion-label position="floating">Correo Electrónico</ion-label>
-            <ion-input
-              type="email"
-              [(ngModel)]="email"> <!-- Vincula el valor del campo email con la propiedad email de la clase -->
-            </ion-input>
-          </ion-item>
+      <!-- Card principal -->
+      <ion-card class="card-recover">
+        <ion-card-header>
+          <ion-card-title>Recuperar Contraseña</ion-card-title>
+        </ion-card-header>
 
-          <!-- Botón para enviar el correo de recuperación -->
-          <ion-button expand="full" type="submit">Enviar Recuperación</ion-button>
+        <ion-card-content>
+          <form (ngSubmit)="sendRecoveryEmail()">
+            <ion-item>
+              <ion-label position="floating">Correo Electrónico</ion-label>
+              <ion-input
+                type="email"
+                [(ngModel)]="email"
+                name="email"
+                required>
+              </ion-input>
+            </ion-item>
 
-          <!-- Botón para regresar a la página de login -->
-          <ion-button expand="full" fill="clear" (click)="goToLogin()">Volver al Login</ion-button>
+            <ion-button expand="full" type="submit">Enviar Recuperación</ion-button>
+            <ion-button expand="full" fill="clear" (click)="goToLogin()">Volver al Login</ion-button>
+          </form>
+        </ion-card-content>
+      </ion-card>
 
-        </form>
-      </ion-card-content>
-    </ion-card>
-
+    </div>
   </div>
 </ion-content>
 

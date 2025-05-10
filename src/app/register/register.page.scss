@@ -1,21 +1,86 @@
-/* myApp\src\app\register\register.page.scss */
+/* Fondo con imagen */
+ion-content {
+  --background: url('/assets/images/FondoIA.jpg') no-repeat center center / cover;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  position: relative; // Necesario para posicionar el overlay
+}
+
+/* Capa oscura encima del fondo */
+.background-overlay {
+  background-color: rgba(0, 0, 0, 0); // Oscurece el fondo
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1; // Asegura que esté sobre la imagen de fondo
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  padding: 16px;
+}
+
+/* Contenedor principal de la página de registro */
 .register-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
+  display: flex;
+  justify-content: flex-end; /* Mismo que login */
+  align-items: center;
+  width: 100%;
+  height: 100vh;
+  z-index: 2;
+  padding: 16px 490px; /* Desplazamiento similar al login */
+  box-sizing: border-box;
+}
+
+/* Tarjeta de registro */
+.card-register {
+  width: 100%;
+  max-width: 400px;
+  background: rgba(0, 0, 0, 0.7); // Fondo translúcido
+  color: white;
+  padding: 1rem;
+}
+
+/* Botones */
+ion-button {
+  margin-top: 20px;
+  width: 100%;
+}
+
+/* Texto extra */
+ion-text {
+  font-size: 0.8em;
+  padding-left: 16px;
+}
+
+/* Estilo para el logo */
+.logo-img {
+  height: 80px;
+  position: relative;
+  right: -20px;
+  top: 10px;
+}
+
+/* Inputs */
+ion-input {
+  margin-bottom: 15px;
+}
+
+ion-label {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* Responsividad */
+@media (max-width: 576px) {
+  ion-label {
+    font-size: 14px;
   }
-  
-  .card-register {
-    width: 100%;
-    max-width: 500px;
-  }
-  
+
   ion-button {
-    margin-top: 20px;
+    font-size: 14px;
+    padding: 10px 20px;
   }
-  
-  ion-text {
-    font-size: 0.8em;
-    padding-left: 16px;
-  }
+}
