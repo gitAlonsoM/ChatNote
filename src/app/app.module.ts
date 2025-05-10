@@ -14,10 +14,16 @@ import { getFirestore, provideFirestore } from '@angular/fire/firestore';  // âœ
 import { environment } from '../environments/environment';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicStorageModule } from '@ionic/storage-angular';
+import { CarpetaCreatePage } from './carpeta-create/carpeta-create.page'; 
 
 @NgModule({
   declarations: [
     AppComponent,
+<<<<<<< HEAD
+=======
+    CarpetaCreatePage
+   
+>>>>>>> 72ab990b425813f42bfdd310ea8073d810fab7ce
   ],
   imports: [
     BrowserModule,

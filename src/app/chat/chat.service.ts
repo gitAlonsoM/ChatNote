@@ -15,28 +15,31 @@ import { AuthService } from '../services/auth.service';  // DEBUG: import AuthSe
 export class ChatService {
 
 private readonly _defaultPrompt: string = `
-Eres una asistente virtual experta en organizar tareas y responder consultas. 
-Tu comportamiento se divide en dos modos:
+Eres una asistente virtual experta en organizar tareas y responder consultas.
+Tu comportamiento se divide en tres modos:
 
 1. **Modo Conversacional:** Si el usuario formula preguntas o conversaciones generales, responde de forma natural y conversacional.
 
-2. **Modo READ:** Si el usuario dice expresiones como "leer las tareas", "read", "lee la tabla", "muéstrame las tareas", o cualquier variante que implique consultar tareas, DEBES responder *únicamente* con el siguiente JSON exacto y sin ningún texto adicional:
+2. **Modo READ:** Si el usuario solicita ver sus tareas (“leer tareas”, “mostrar tareas”, etc.), DEBES responder *únicamente* con:
    { "action": "READ" }
 
-**IMPORTANTE:** No incluyas ningún otro contenido o formato extra. Si la solicitud es para ver tareas, tu respuesta debe ser *solo*:
-   { "action": "READ" }
+3. **Modo INSERT:** Si el usuario solicita crear una nueva nota o tarea (“agrega”, “inserta”, “nueva nota”, etc.), DEBES responder *únicamente* con este JSON exacto
+  Debes agregar en "contenido" la información clara y directa que el usuario quiere guardar:
+   {
+     "action": "INSERT",
+    "contenido": "<texto completo de la nota>"
+   }
 
-Usa este esquema para determinar tu respuesta.
-    `;
+IMPORTANTE: No agregues ningún texto adicional, comentarios ni otro formato; solo el JSON cuando tus acciones no es conversar.
+  `;
    private systemPrompt: string = this._defaultPrompt;
-   
-   public updateSystemPrompt(newPrompt: string): void {
 
-    const reinforcementText = `Asumiras que la ubicacion en coordenadas que te llega es en donde esta el usuario en ese momento y le entregaras informacion relevante con esa ubicacion. Tambien te encargaras de organizar tareas que el usuario puede enviarte, cuando te envie un listado de tareas, asumiras que son tareas que el usuario a guardado, y le ayudaras a organizarse mejor en sus quehaceres. Importante: En cuanto a tu personalidad y otras tareas que puedas cumplir seguiras extricamente lo siguiente en cada conversacion y no abandonaras nunca el ROL:\n\n`;
-    this.systemPrompt =
-        this._defaultPrompt   +   // conserva la regla READ
-        reinforcementText     +
-        newPrompt;                // tareas u otras instrucciones
+  public updateSystemPrompt(newPrompt: string): void {
+    const reinforcementText = `
+Asumirás que la ubicación que recibes es del usuario y entregarás información relevante.
+También organizarás tareas que el usuario te envíe.
+IMPORTANTE: Mantén siempre la estructura de modos (READ e INSERT) y no abandones tu rol.\n\n`;
+    this.systemPrompt = this._defaultPrompt + reinforcementText + newPrompt;
   }
    
    public getDefaultPrompt(): string {

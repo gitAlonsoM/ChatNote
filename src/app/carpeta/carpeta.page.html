@@ -1,0 +1,39 @@
+<!-- src\app\carpeta\carpeta.page.html -->
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Carpeta: {{ carpetaNombre }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- Input + botón para crear nota -->
+  <ion-item>
+    <ion-input
+      [(ngModel)]="newNoteContent"
+      placeholder="Nueva nota..."
+      clearInput
+    ></ion-input>
+    <ion-button slot="end" (click)="addNote()">Crear Nota</ion-button>
+  </ion-item>
+
+  <!-- Listado de notas -->
+  <ion-list>
+    <ion-item *ngFor="let note of notes">
+      <ion-label class="note-content">{{ note.contenido }}</ion-label>
+      <ion-buttons slot="end">
+        <ion-button fill="clear" (click)="editNote(note)">
+          <ion-icon name="pencil-outline"></ion-icon>
+        </ion-button>
+        <ion-button fill="clear" (click)="deleteNote(note)">
+          <ion-icon name="trash-outline"></ion-icon>
+        </ion-button>
+      </ion-buttons>
+    </ion-item>
+    <ion-item *ngIf="notes.length === 0">
+      <ion-label>No hay notas aún.</ion-label>
+    </ion-item>
+  </ion-list>
+</ion-content>

@@ -145,116 +145,185 @@ En futuro, podrían usarse Camera, Haptics, etc., desde la UI.
 ## Estructura del Proyecto
 El proyecto sigue una estructura típica de una aplicación Angular con Ionic. A continuación, se detalla la estructura principal del proyecto:
 ## Estructura del Proyecto
+Listado de rutas de carpetas para el volumen Alonso
+El número de serie del volumen es CE3D-452B
+C:\USERS\ALONM\DESKTOP\CHATNOTE_IONIC\SRC\APP
+|   app-routing.module.ts
+|   app.component.html
+|   app.component.scss
+|   app.component.spec.ts
+|   app.component.ts
+|   app.module.ts
+|   
++---carpeta
+|       carpeta-routing.module.ts
+|       carpeta.module.ts
+|       carpeta.page.html
+|       carpeta.page.scss
+|       carpeta.page.spec.ts
+|       carpeta.page.ts
+|
++---carpeta-create
+|       carpeta-create.page.html
+|       carpeta-create.page.scss
+|       carpeta-create.page.ts
+|
++---chat
+|   |   chat-routing.module.ts
+|   |   chat-storage.service.spec.ts
+|   |   chat-storage.service.ts
+|   |   chat.module.ts
+|   |   chat.page.html
+|   |   chat.page.scss
+|   |   chat.page.spec.ts
+|   |   chat.page.ts
+|   |   chat.service.spec.ts
+|   |   chat.service.ts
+|   |
+|   \---custom-instruction
+|           custom-instruction-routing.module.ts
+|           custom-instruction.module.ts
+|           custom-instruction.page.html
+|           custom-instruction.page.scss
+|           custom-instruction.page.spec.ts
+|           custom-instruction.page.ts
+|           custom-instruction.service.spec.ts
+|           custom-instruction.service.ts
+|
++---connection-status
+|       connection-status.component.html
+|       connection-status.component.scss
+|       connection-status.component.spec.ts
+|       connection-status.component.ts
+|
++---guards
+|       auth.guard.spec.ts
+|       auth.guard.ts
+|
++---home
+|       home-routing.module.ts
+|       home.module.ts
+|       home.page.html
+|       home.page.scss
+|       home.page.spec.ts
+|       home.page.ts
+|
++---login
+|       login-routing.module.ts
+|       login.module.ts
+|       login.page.html
+|       login.page.scss
+|       login.page.spec.ts
+|       login.page.ts
+|
++---quienes-somos
+|       quienes-somos-routing.module.ts
+|       quienes-somos.module.ts
+|       quienes-somos.page.html
+|       quienes-somos.page.scss
+|       quienes-somos.page.spec.ts
+|       quienes-somos.page.ts
+|
++---recover-key
+|       recover-key-routing.module.ts
+|       recover-key.module.ts
+|       recover-key.page.html
+|       recover-key.page.scss
+|       recover-key.page.spec.ts
+|       recover-key.page.ts
+|
++---register
+|       register-routing.module.ts
+|       register.module.ts
+|       register.page.html
+|       register.page.scss
+|       register.page.spec.ts
+|       register.page.ts
+|
+\---services
+        auth.service.spec.ts
+        auth.service.ts
+        carpeta.service.ts
+        geolocation.service.ts
+        task.service.spec.ts
 
-myApp/
-PS ChatNote_IONIC> Show-Tree -Path $root
-└── .browserslistrc
-└── .editorconfig
-└── ALONSO.MD
-└── capacitor.config.ts
-└── github.md
-└── karma.conf.js
-└── NewFeaturesAlonso.md
-└── otros.md
-└── readme.md
-├── .angular
-│   ├── cache
-│   │   ├── 18.2.7
-├── src
-│   └── global.scss
-│   └── index.html
-│   └── main.ts
-│   └── polyfills.ts
-│   └── test.ts
-│   └── zone-flags.ts
-│   ├── app
-│   │   └── app.component.html
-│   │   └── app.component.scss
-│   │   └── app.component.spec.ts
-│   │   └── app.component.ts
-│   │   └── app.module.ts
-│   │   └── app-routing.module.ts
-│   │   ├── chat
-│   │   │   └── chat.module.ts
-│   │   │   └── chat.page.html
-│   │   │   └── chat.page.scss
-│   │   │   └── chat.page.spec.ts
-│   │   │   └── chat.page.ts
-│   │   │   └── chat.service.spec.ts
-│   │   │   └── chat.service.ts
-│   │   │   └── chat-routing.module.ts
-│   │   │   └── chat-storage.service.spec.ts
-│   │   │   └── chat-storage.service.ts
-│   │   │   ├── custom-instruction
-│   │   │   │   └── custom-instruction.module.ts
-│   │   │   │   └── custom-instruction.page.html
-│   │   │   │   └── custom-instruction.page.scss
-│   │   │   │   └── custom-instruction.page.spec.ts
-│   │   │   │   └── custom-instruction.page.ts
-│   │   │   │   └── custom-instruction.service.spec.ts
-│   │   │   │   └── custom-instruction.service.ts
-│   │   │   │   └── custom-instruction-routing.module.ts
-│   │   ├── connection-status
-│   │   │   └── connection-status.component.html
-│   │   │   └── connection-status.component.scss
-│   │   │   └── connection-status.component.spec.ts
-│   │   │   └── connection-status.component.ts
-│   │   ├── guards
-│   │   │   └── auth.guard.spec.ts
-│   │   │   └── auth.guard.ts
-│   │   ├── home
-│   │   │   └── home.module.ts
-│   │   │   └── home.page.html
-│   │   │   └── home.page.scss
-│   │   │   └── home.page.spec.ts
-│   │   │   └── home.page.ts
-│   │   │   └── home-routing.module.ts
-│   │   ├── login
-│   │   │   └── login.module.ts
-│   │   │   └── login.page.html
-│   │   │   └── login.page.scss
-│   │   │   └── login.page.spec.ts
-│   │   │   └── login.page.ts
-│   │   │   └── login-routing.module.ts
-│   │   ├── quienes-somos
-│   │   │   └── quienes-somos.module.ts
-│   │   │   └── quienes-somos.page.html
-│   │   │   └── quienes-somos.page.scss
-│   │   │   └── quienes-somos.page.spec.ts
-│   │   │   └── quienes-somos.page.ts
-│   │   │   └── quienes-somos-routing.module.ts
-│   │   ├── recover-key
-│   │   │   └── recover-key.module.ts
-│   │   │   └── recover-key.page.html
-│   │   │   └── recover-key.page.scss
-│   │   │   └── recover-key.page.spec.ts
-│   │   │   └── recover-key.page.ts
-│   │   │   └── recover-key-routing.module.ts
-│   │   ├── register
-│   │   │   └── register.module.ts
-│   │   │   └── register.page.html
-│   │   │   └── register.page.scss
-│   │   │   └── register.page.spec.ts
-│   │   │   └── register.page.ts
-│   │   │   └── register-routing.module.ts
-│   │   ├── services
-│   │   │   └── auth.service.spec.ts
-│   │   │   └── auth.service.ts
-│   │   │   └── geolocation.service.ts
-│   ├── assets
-│   │   └── shapes.svg
-│   │   ├── icon
-│   │   │   └── favicon.png
-│   │   ├── images
-│   │   │   └── gmail.png
-│   │   │   └── instagram.png
-│   │   │   └── logo.png
-│   │   │   └── Whatsapp.png
-│   ├── environments
-│   │   └── environment.prod.ts
-│   │   └── environment.ts
-│   ├── theme
-│   │   └── variables.scss
+PS C:\Users\alonm\Desktop\ChatNote_IONIC> 
+# ======================================================================================
+# DESCRIPCION MODULOS Y ARCHIVOS CLAVES DEL PROYECTO
+
+carpeta/
+carpeta-routing.module.ts – Ruteo de la vista de notas dentro de una carpeta.
+
+carpeta.module.ts – Declara el módulo de la página Carpeta.
+
+carpeta.page.ts – Lógica para listar y CRUD de notas dentro de una carpeta.
+
+carpeta.page.html – Template de la UI de la carpeta (input + listado de notas).
+
+carpeta-create/
+
+carpeta-create.page.ts – Modal para crear nuevas carpetas (prototipo).
+
+carpeta-create.page.html – Formulario de nombre de nueva carpeta.
+
+chat/
+
+chat-routing.module.ts – Ruteo de la página de chat principal.
+
+chat.module.ts – Declara el módulo de la página Chat.
+
+chat.page.ts – Lógica de envío/recepción de mensajes y geolocalización.
+
+chat.page.html – Template del chat (mensajes + input).
+
+chat.service.ts – Servicio que comunica con el backend Django/OpenAI.
+
+chat-storage.service.ts – Persistencia local del historial de chat.
+
+connection-status/
+
+connection-status.component.ts – Componente que muestra indicador de estado (online/offline).
+
+guards/
+
+auth.guard.ts – Protege rutas que requieren usuario autenticado.
+
+home/
+
+home.module.ts – Módulo de la página de bienvenida/landing.
+
+login/
+
+login.module.ts – Módulo de la página de login.
+
+login.page.ts – Lógica de autenticación con Firebase.
+
+quienes-somos/
+
+quienes-somos.module.ts – Módulo de la sección “Quiénes somos”.
+
+recover-key/
+
+recover-key.module.ts – Módulo de la página de recuperación de contraseña.
+
+register/
+
+register.module.ts – Módulo de la página de registro de usuarios.
+
+services/
+
+auth.service.ts – Maneja Firebase Auth y estado de sesión.
+
+carpeta.service.ts – Mock de CRUD de carpetas y notas (prototipo).
+
+geolocation.service.ts – Envuelve el plugin de geolocalización de Capacitor.
+
+app-routing.module.ts – Define todas las rutas lazy-loaded de la app.
+
+app.component.ts/html – Contiene el menú lateral global y lógica de logout.
+
+app.module.ts – Módulo raíz que importa IonicModule, Firebase, y declara los modales.
+
 PS C:\Users\alonm\Desktop\ChatNote_IONIC>
 
 # ======================================================================================
