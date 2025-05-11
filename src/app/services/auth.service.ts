@@ -18,22 +18,26 @@ export class AuthService {
 
   // Se asegura de que Auth se inyecte correctamente
   private auth: Auth = inject(Auth); 
+  private userSynced = false;
+
 
   constructor(
     private router: Router,
     private toastController: ToastController,
-    private http: HttpClient // Se agrega HttpClient para enviar datos a Django
+    private http: HttpClient
   ) {
-    // Verifica el estado de autenticación al iniciar el servicio
+    // Se dispara cada vez que Firebase detecta cambio de auth-state
     this.auth.onAuthStateChanged(user => {
       this.isLoggedInSubject.next(!!user);
-      // Comentamos o eliminamos la navegación automática al login:
-      // if (!user) {
-      //   this.router.navigate(['/login']);
-      // }
+
+      if (user && !this.userSynced) {                        // DEBUG
+        // Sincroniza en caliente usuario->Oracle
+        this.sendToDjango(user.uid, user.email ?? '', 'Provisorio');
+        this.userSynced = true;
+      }
     });
   }
-
+  
   // Método para registrar un nuevo usuario
   async register(email: string, password: string, name: string): Promise<UserCredential> {
     try {
@@ -68,23 +72,24 @@ export class AuthService {
   }
   
 
-
   // Método para iniciar sesión
-  async login(email: string, password: string, rememberMe: boolean = false): Promise<User | null> {
+    async login(email: string, password: string, rememberMe = false): Promise<User | null> {
     try {
       const userCredential = await signInWithEmailAndPassword(this.auth, email, password);
-      console.log('Inicio de sesión exitoso:', userCredential);
-      this.isLoggedInSubject.next(true); // Actualiza el estado a 'true' al iniciar sesión
+      console.log('Inicio de sesión exitoso:', userCredential);          // DEBUG
+      this.isLoggedInSubject.next(true);
 
-      // Si "Recordar cuenta" está marcado, guardar el usuario en sessionStorage en lugar de localStorage
+      // NEW: asegura creación/validación del usuario en Oracle
+      const { uid, email: e } = userCredential.user;
+      this.sendToDjango(uid, e ?? '', 'Provisorio');                      // <-- aquí
+
       if (rememberMe) {
-        sessionStorage.setItem('user', JSON.stringify(userCredential.user)); // Guardar usuario en sessionStorage
+        sessionStorage.setItem('user', JSON.stringify(userCredential.user));
       }
-
-      return userCredential.user; // Retorna solo el objeto de usuario
+      return userCredential.user;
     } catch (error) {
       console.error('Error en el inicio de sesión:', error);
-      throw error; // Propaga el error para manejo en el componente
+      throw error;
     }
   }
 

@@ -1,53 +1,94 @@
-//src\app\services\carpeta.service.ts
+// src/app/services/carpeta.service.ts
 import { Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError, tap, map } from 'rxjs/operators'; // Añadir map
+import { AuthService } from './auth.service'; // Necesario para obtener el UID del usuario
 
-export interface Nota {
-  id: number;
-  contenido: string;
-  createdAt: Date;
+
+export interface Carpeta { // Definir una interfaz para tus carpetas
+  carpeta_id: number; // o string, según tu BD
+  nombre: string;
+  // user_id?: string; // Opcional
+  // espacio_id?: number; // Opcional
 }
 
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root'
+})
 export class CarpetaService {
-  // Mock: notas agrupadas por carpeta
-  private _notas: Record<number, Nota[]> = {};
+  // URL directa a tu endpoint de Django para carpetas
+  private apiUrl = 'http://127.0.0.1:8000/api/folders/'; 
 
-  /** Listar notas de una carpeta (proximamente: GET /api/carpetas/{id}/notas/) */
-  async listarNotas(carpetaId: number): Promise<Nota[]> {
-    return this._notas[carpetaId] || [];
+  constructor(private http: HttpClient, private authService: AuthService) {
+    console.log('[CarpetaService] Constructor: Servicio de carpetas instanciado. API URL:', this.apiUrl);
   }
 
-  /** Crear nota en carpeta (proximamente: POST /api/carpetas/{id}/notas/) */
-  async crearNota(carpetaId: number, contenido: string): Promise<Nota> {
-    const nota: Nota = { id: Date.now(), contenido, createdAt: new Date() };
-    if (!this._notas[carpetaId]) { this._notas[carpetaId] = []; }
-    this._notas[carpetaId].unshift(nota);
-    return nota;
+  createPersonalFolder(nombreCarpeta: string): Observable<any> {
+    console.log('[CarpetaService] Iniciando createPersonalFolder con nombre:', nombreCarpeta);
+    const user = this.authService.getCurrentUser(); // Obtiene el usuario actual de Firebase
+
+    if (!user || !user.uid) {
+      const errorMsg = 'Usuario no autenticado. No se puede crear carpeta.';
+      console.error('[CarpetaService] Error:', errorMsg);
+      return throwError(() => new Error(errorMsg));
+    }
+    console.log('[CarpetaService] Usuario obtenido para crear carpeta. UID:', user.uid);
+
+    const payload = {
+      uid: user.uid,
+      nombre: nombreCarpeta
+    };
+
+    const httpOptions = {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+       
+      })
+    };
+
+    console.log('[CarpetaService] Enviando POST a:', this.apiUrl, 'con payload:', payload);
+
+    return this.http.post<any>(this.apiUrl, payload, httpOptions)
+      .pipe(
+        tap(response => {
+          console.log('[CarpetaService] Respuesta exitosa de POST:', response);
+        }),
+        catchError((error: HttpErrorResponse) => {
+          console.error('[CarpetaService] Error en la solicitud POST. Status:', error.status, 'Error Body:', error.error);
+          // Propagar el HttpErrorResponse completo para que el componente pueda manejarlo
+          return throwError(() => error);
+        })
+      );
   }
 
-  /** Actualizar nota (proximamente: PUT /api/notas/{id}/) */
-  async actualizarNota(carpetaId: number, notaId: number, contenido: string): Promise<Nota|undefined> {
-    const notas = this._notas[carpetaId] || [];
-    const nota = notas.find(n => n.id === notaId);
-    if (nota) { nota.contenido = contenido; }
-    return nota;
-  }
+  listPersonalFolders(): Observable<Carpeta[]> {
+    console.log('[CarpetaService] Iniciando listPersonalFolders.');
+    const user = this.authService.getCurrentUser();
 
-  /** Eliminar nota (proximamente: DELETE /api/notas/{id}/) */
-  async eliminarNota(carpetaId: number, notaId: number): Promise<void> {
-    this._notas[carpetaId] = (this._notas[carpetaId] || []).filter(n => n.id !== notaId);
-  }
+    if (!user || !user.uid) {
+      const errorMsg = 'Usuario no autenticado. No se pueden listar carpetas.';
+      console.error('[CarpetaService] Error:', errorMsg);
+      return throwError(() => new Error(errorMsg));
+    }
+    console.log('[CarpetaService] Usuario para listar carpetas. UID:', user.uid);
 
-  // Mock: carpetas
-  private _carpetas = [{ id: 1, nombre: 'Cocina' }];
+    // Construir los parámetros de la query para la petición GET
+    const params = new HttpParams().set('uid', user.uid);
+    const httpOptions = { params: params };
 
-  async listarCarpetas(): Promise<{ id: number; nombre: string }[]> {
-    return this._carpetas;
-  }
-
-  async crearCarpeta(nombre: string): Promise<{ id: number; nombre: string }> {
-    const carpeta = { id: Date.now(), nombre };
-    this._carpetas.push(carpeta);
-    return carpeta;
+    console.log('[CarpetaService] Enviando GET a:', this.apiUrl, 'con params:', params.toString());
+    return this.http.get<{ folders: Carpeta[] }>(this.apiUrl, httpOptions) // Esperamos un objeto { folders: [...] }
+      .pipe(
+        map(response => response.folders), // Extraer solo el array de carpetas
+        tap(carpetas => console.log('[CarpetaService] Respuesta GET (listar). Carpetas:', carpetas)),
+        catchError((error: HttpErrorResponse) => {
+          console.error('[CarpetaService] Error en GET (listar). Status:', error.status, 'Body:', error.error);
+          return throwError(() => error);
+        })
+      );
   }
 }
+
+  
+
