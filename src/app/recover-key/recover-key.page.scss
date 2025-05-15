@@ -1,32 +1,133 @@
 /* myApp\src\app\recover-key\recover-key.page.scss */
 
+/* Fondo con imagen */
+ion-content {
+  --background: url('/assets/images/FondoIA.jpg') no-repeat center center / cover;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  position: relative; // Necesario para overlay
+}
+
+/* Capa oscura encima del fondo */
+.background-overlay {
+  background-color: rgba(0, 0, 0, 0); // Oscurece el fondo
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  padding: 16px;
+}
+
+/* Contenedor principal */
 .container-recover {
-    display: flex;
-    justify-content: center; /* Centra el contenido horizontalmente */
-    align-items: center; /* Centra el contenido verticalmente */
-    height: 100%; /* Asegura que el contenedor ocupe toda la altura disponible */
-    padding: 16px; /* Añadido para evitar que el contenido se pegue a los bordes */
-    box-sizing: border-box; /* Asegura que el padding no afecte el tamaño total */
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+  height: 100vh;
+  z-index: 2;
+  padding: 16px 490px;
+  box-sizing: border-box;
 }
 
+/* Card principal */
 .card-recover {
-    width: 100%; /* Asegura que el card ocupe todo el ancho disponible */
-    max-width: 500px; /* Establece un máximo de 500px para el card */
-    padding: 16px; /* Añadido para agregar espacio dentro del card */
-    box-sizing: border-box; /* Asegura que el padding se incluya en el tamaño total */
-    border-radius: 8px; /* Opcional: Bordes redondeados para mejorar el diseño */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Opcional: Agrega sombra para darle profundidad */
+  width: 100%;
+  max-width: 400px;
+  background: rgba(0, 0, 0, 0.7); // Fondo oscuro
+  color: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  transition: transform 1s ease-in-out, opacity 0.2s ease-in-out;
 }
 
-/* Estilos adicionales opcionales */
-ion-card-header, ion-card-title {
-    text-align: center; /* Centra el título del card */
+/* Logo */
+.logo-img {
+  height: 80px;
+  position: relative;
+  right: -20px;
+  top: 10px;
 }
 
+/* Título centrado */
+ion-card-header,
+ion-card-title {
+  text-align: center;
+}
+
+/* Inputs */
 ion-item {
-    margin-bottom: 16px; /* Espacio entre los elementos de formulario */
+  margin-bottom: 16px;
 }
 
 ion-input {
-    width: 100%; /* Asegura que el input ocupe todo el ancho dentro de ion-item */
+  margin-bottom: 15px;
+}
+
+ion-label {
+  font-size: 16px;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+/* Botones */
+ion-button {
+  width: 100%;
+  margin-top: 10px;
+}
+
+ion-button[type='submit'] {
+  background-color: #3880ff;
+  color: white;
+}
+
+ion-button[fill='clear'] {
+  color: #3880ff;
+}
+
+/* Animación pulse (opcional) */
+button.animated {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+  .container-recover {
+    justify-content: center;
+    padding: 10px;
+  }
+
+  .card-recover {
+    max-width: 90%;
+  }
+
+  ion-label {
+    font-size: 14px;
+  }
+
+  ion-button {
+    font-size: 14px;
+  }
 }

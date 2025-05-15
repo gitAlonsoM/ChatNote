@@ -1,7 +1,7 @@
-//src\app\services\auth.service.ts
+// src/app/services/auth.service.ts
 import { Injectable } from '@angular/core';
-import { Auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, User, UserCredential } from '@angular/fire/auth'; 
-import { Observable, BehaviorSubject } from 'rxjs'; // Importar BehaviorSubject
+import {Auth,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendPasswordResetEmail, signOut, User, UserCredential} from '@angular/fire/auth';
+import { BehaviorSubject } from 'rxjs'; // Importar BehaviorSubject
 import { Router } from '@angular/router';
 import { ToastController } from '@ionic/angular';
 import { HttpClient } from '@angular/common/http';
@@ -17,9 +17,7 @@ export class AuthService {
   isLoggedIn$ = this.isLoggedInSubject.asObservable(); // Observable para que otros componentes puedan suscribirse
 
   // Se asegura de que Auth se inyecte correctamente
-  private auth: Auth = inject(Auth); 
-  private userSynced = false;
-
+  private auth: Auth = inject(Auth);
 
   constructor(
     private router: Router,
@@ -29,12 +27,6 @@ export class AuthService {
     // Se dispara cada vez que Firebase detecta cambio de auth-state
     this.auth.onAuthStateChanged(user => {
       this.isLoggedInSubject.next(!!user);
-
-      if (user && !this.userSynced) {                        // DEBUG
-        // Sincroniza en caliente usuario->Oracle
-        this.sendToDjango(user.uid, user.email ?? '', 'Provisorio');
-        this.userSynced = true;
-      }
     });
   }
   
@@ -56,21 +48,18 @@ export class AuthService {
     }
   }
 
-   // Método para enviar los datos a Django (uid, email y name)
-   sendToDjango(uid: string, email: string, name: string) {
+  // Método para enviar los datos a Django (uid, email y name)
+  sendToDjango(uid: string, email: string, name: string) {
     const payload = { uid, email, name };
-
-    this.http.post('http://127.0.0.1:8000/api/register/', payload)
-      .subscribe({
-        next: (response) => {
-          console.log('Datos enviados a Django:', response);
-        },
-        error: (error) => {
-          console.error('Error al enviar a Django:', error);
-        }
-      });
+    this.http.post('http://127.0.0.1:8000/api/register/', payload).subscribe({
+      next: response => {
+        console.log('Datos enviados a Django:', response);
+      },
+      error: error => {
+        console.error('Error al enviar a Django:', error);
+      }
+    });
   }
-  
 
   // Método para iniciar sesión
     async login(email: string, password: string, rememberMe = false): Promise<User | null> {
@@ -131,7 +120,6 @@ export class AuthService {
         // Mostrar toast de desconexión exitosa
         this.showToast('Te has desconectado de forma exitosa. Vuelve pronto.');
 
-        this.router.navigate(['/login']); // Redirigir al login solo si estaba autenticado
       } catch (error) {
         console.error('Error al desconectarse:', error);
         throw error; // Propaga el error para manejo en el componente
@@ -139,7 +127,6 @@ export class AuthService {
     } else {
       // Si no hay un usuario autenticado (invitado), no se realiza el cierre de sesión
       console.log('Usuario invitado no necesita desconectarse.');
-      // Mostrar toast de que solo los usuarios autenticados pueden desconectarse
       this.showToast('Solo los usuarios autenticados pueden desconectarse.');
     }
   }
@@ -152,7 +139,7 @@ export class AuthService {
       position: 'top',
       color: 'success' // Cambia a 'warning' si quieres un color diferente
     });
-    toast.present();
+    await toast.present();
   }
 
   // Método público para obtener el valor actual de isLoggedIn

@@ -64,3 +64,5 @@ ionic generate service services/task
 
 ionic generate component menu
 
+## FIRESTORE
+ChatNote\src\app\register\register.page.ts
