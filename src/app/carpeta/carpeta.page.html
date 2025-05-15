@@ -7,6 +7,13 @@
       </ion-button>
     </ion-buttons>
     <ion-title>{{ nombreCarpeta }}</ion-title>
+
+     <ion-buttons slot="end"> 
+      <!-- Show options button only if carpetaId is valid AND canManageFolder is true -->
+      <ion-button (click)="presentFolderActions()" *ngIf="carpetaId && canManageFolder" aria-label="Folder options"> 
+        <ion-icon slot="icon-only" name="ellipsis-vertical-outline"></ion-icon> 
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
@@ -20,12 +27,11 @@
     <ion-icon name="document-text-outline" style="font-size: 3em;" color="medium"></ion-icon>
     <p>Esta carpeta aún no tiene notas.</p>
   </div>
-
-  <ion-list *ngIf="notas.length > 0"> <!-- No ocultar la lista mientras carga si ya hay notas -->
-    <div *ngIf="isLoading" class="ion-text-center ion-padding-top"> <!-- Spinner discreto arriba de la lista si está recargando -->
+<ion-list *ngIf="notas.length > 0 && carpetaId"> 
+    <div *ngIf="isLoading" class="ion-text-center ion-padding-top"> 
          <ion-spinner name="dots"></ion-spinner>
     </div>
-    <ion-item-sliding *ngFor="let nota of notas; trackBy: trackNotaById"> <!-- trackBy para mejor rendimiento del *ngFor -->
+    <ion-item-sliding *ngFor="let nota of notas; trackBy: trackNotaById"> 
       <ion-item lines="inset">
         <ion-label class="ion-text-wrap">
           <h2>{{ nota.contenido }}</h2>
@@ -37,9 +43,13 @@
       </ion-item>
 
       <ion-item-options side="end">
-        <ion-item-option color="tertiary" (click)="editarNota(nota)"> <!-- Cambiado color a tertiary -->
-          <ion-icon slot="start" name="create-outline"></ion-icon> <!-- Ícono a la izquierda del texto -->
+        <ion-item-option color="tertiary" (click)="editarNota(nota)"> 
+          <ion-icon slot="start" name="create-outline"></ion-icon> 
           Editar
+        </ion-item-option>
+        <ion-item-option color="secondary" (click)="promptMoveNota(nota)"> <!-- New option to move/change folder -->
+          <ion-icon slot="start" name="swap-horizontal-outline"></ion-icon> <!-- Icon for moving or changing -->
+          Cambiar
         </ion-item-option>
         <ion-item-option color="danger" (click)="eliminarNota(nota)">
           <ion-icon slot="start" name="trash-outline"></ion-icon>

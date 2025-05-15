@@ -115,6 +115,42 @@ export class NotaService {
       );
   }
 
+
+   moveNoteToFolder(notaId: number, newFolderId: number): Observable<any> { // Method to move a note to a new folder
+    console.log(`DEBUG: [NotaService] Attempting to move note. NoteID: ${notaId}, NewFolderID: ${newFolderId}`); // DEBUG: Log call
+    const user = this.authService.getCurrentUser();
+    if (!user || !user.uid) {
+      const errorMsg = 'User not authenticated. Cannot move note.';
+      console.error('DEBUG: [NotaService] Error:', errorMsg); // DEBUG: Log auth error
+      return throwError(() => new Error(errorMsg));
+    }
+
+    const payload = { // Payload for the PATCH request
+      uid: user.uid,
+      new_folder_id: newFolderId // Key as expected by the backend
+    };
+    const httpOptions = {
+      headers: new HttpHeaders({ 'Content-Type': 'application/json' })
+    };
+    
+    const requestUrl = `${this.apiUrl}${notaId}/`; // URL for specific note: e.g., /api/notes/456/
+    console.log(`DEBUG: [NotaService] Sending PATCH to: ${requestUrl} with payload:`, payload); // DEBUG: Log HTTP call details
+
+    return this.http.patch<any>(requestUrl, payload, httpOptions) // Using PATCH method
+      .pipe(
+        tap(response => {
+          console.log(`DEBUG: [NotaService] moveNoteToFolder successful response:`, response); // DEBUG: Log success response
+        }),
+        catchError((error: HttpErrorResponse) => {
+          console.error(`DEBUG: [NotaService] moveNoteToFolder error. Status: ${error.status}, Body:`, error.error); // DEBUG: Log error response
+          // Propagate the full HttpErrorResponse so the component can access error.error for specific messages
+          return throwError(() => error); 
+        })
+      );
+  }
+
+
+
   private handleError(error: HttpErrorResponse) {
     console.error('[NotaService] Ocurrió un error HTTP:', error.message, 'Status:', error.status, 'Body:', error.error);
     let errorMessage = 'Algo salió mal; por favor, inténtalo de nuevo más tarde.';
