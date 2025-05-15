@@ -12,6 +12,7 @@ export interface Nota {
   updated_at?: string;
 }
 
+
 export interface NotaCreadaResponse {
     created: boolean;
     message: string;
