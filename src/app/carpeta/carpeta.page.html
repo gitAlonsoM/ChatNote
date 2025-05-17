@@ -58,6 +58,62 @@
       </ion-item-options>
     </ion-item-sliding>
   </ion-list>
+
+  <div class="section-header" *ngIf="carpetaId">
+    <h3>Adjuntar Archivo</h3>
+  </div>
+  <ion-card *ngIf="carpetaId" class="upload-card">
+    <ion-card-content>
+      <ion-item lines="full">
+        <input id="fileUploadInput" type="file" (change)="onFileSelected($event)" style="display: block; margin-bottom: 10px;"/>
+      </ion-item>
+      <ion-item lines="full">
+        <ion-input label="Nombre del Archivo (*)" labelPlacement="stacked" [(ngModel)]="nuevoArchivoNombre" placeholder="Ej: Reporte Trimestral" required></ion-input>
+      </ion-item>
+      <ion-item lines="full">
+        <ion-textarea label="Descripción (opcional)" labelPlacement="stacked" [(ngModel)]="nuevoArchivoDescripcion" placeholder="Breve descripción del contenido del archivo"></ion-textarea>
+      </ion-item>
+      <ion-button expand="block" (click)="subirArchivo()" [disabled]="!archivoParaSubir || !nuevoArchivoNombre.trim() || isUploadingFile">
+        <ion-spinner *ngIf="isUploadingFile" name="crescent" slot="start"></ion-spinner>
+        {{ isUploadingFile ? 'Subiendo...' : 'Subir Archivo' }}
+        <ion-icon *ngIf="!isUploadingFile" name="cloud-upload-outline" slot="end"></ion-icon>
+      </ion-button>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Separador visual -->
+  <ion-item-divider *ngIf="carpetaId" style="margin-top: 20px; margin-bottom: 10px;"></ion-item-divider>
+  
+  <!-- Sección para Listar Archivos Adjuntos -->
+  <div class="section-header" *ngIf="carpetaId">
+    <h3>Archivos Adjuntos</h3>
+  </div>
+  <div *ngIf="isLoadingArchivos && archivos.length === 0 && carpetaId" class="ion-text-center ion-padding">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Cargando archivos...</p>
+  </div>
+  <div *ngIf="!isLoadingArchivos && archivos.length === 0 && carpetaId" class="ion-text-center ion-padding empty-state">
+    <ion-icon name="folder-open-outline" style="font-size: 3em;" color="medium"></ion-icon>
+    <p>Esta carpeta aún no tiene archivos adjuntos.</p>
+  </div>
+
+  <ion-list *ngIf="archivos.length > 0 && carpetaId">
+    <div *ngIf="isLoadingArchivos" class="ion-text-center ion-padding-top">
+      <ion-spinner name="dots"></ion-spinner>
+    </div>
+    <ion-item *ngFor="let archivo of archivos" lines="inset">
+      <ion-icon name="document-attach-outline" slot="start" color="secondary"></ion-icon>
+      <ion-label class="ion-text-wrap">
+        <h2>{{ archivo.nombre_archivo }}</h2>
+        <p *ngIf="archivo.descripcion"><small>{{ archivo.descripcion }}</small></p>
+        <p><small>Subido: {{ archivo.fecha_subida | date:'dd/MM/yy HH:mm' }} | Tipo: {{ archivo.nombre_mime }}</small></p>
+      </ion-label>
+      <ion-button fill="clear" slot="end" (click)="descargarArchivo(archivo)" aria-label="Descargar archivo">
+        <ion-icon slot="icon-only" name="download-outline" color="primary"></ion-icon>
+      </ion-button>
+    </ion-item>
+  </ion-list>
+  
 </ion-content>
 
 <ion-footer class="ion-no-border" *ngIf="carpetaId"> <!-- Solo mostrar si tenemos un carpetaId -->

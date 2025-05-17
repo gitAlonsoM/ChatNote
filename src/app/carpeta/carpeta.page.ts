@@ -1,13 +1,15 @@
 // src/app/carpeta/carpeta.page.ts
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router'; // <--- Router AÑADIDO
+import { ActivatedRoute, Router } from '@angular/router'; 
 import { NavController, AlertController, ToastController, LoadingController, ActionSheetController } from '@ionic/angular';
 import { NotaService, Nota } from '../services/nota.service';
 import { CarpetaService, RenameFolderErrorResponse } from '../services/carpeta.service';
 import { AuthService } from '../services/auth.service';
 import { Subscription } from 'rxjs';
-import { finalize } from 'rxjs/operators'; // switchMap no se usa directamente aquí ahora
-import { HttpErrorResponse } from '@angular/common/http'; // HttpErrorResponse IMPORTED
+import { finalize } from 'rxjs/operators'; 
+import { HttpErrorResponse } from '@angular/common/http'; 
+import { ArchivoAdjuntoService, ArchivoAdjuntoInfo, UploadResponse } from '../services/archivo-adjunto.service'; // Importar servicio y tipos de archivos
+import { saveAs } from 'file-saver'; // Para descargar archivos. Necesitarás: npm install file-saver @types/file-saver --save-dev
 
 @Component({
   selector: 'app-carpeta',
@@ -21,22 +23,28 @@ export class CarpetaPage implements OnInit, OnDestroy {
   notas: Nota[] = [];
   isLoading: boolean = false;
   nuevaNotaContenido: string = '';
-
+  archivos: ArchivoAdjuntoInfo[] = []; 
+  isLoadingArchivos: boolean = false;  
+  nuevoArchivoNombre: string = '';       
+  nuevoArchivoDescripcion: string = ''; 
+  archivoParaSubir: File | null = null; 
+  isUploadingFile: boolean = false;
   private routeSubscription: Subscription | undefined;
   private currentUserUid: string | null = null;
 
   constructor(
     private route: ActivatedRoute,
-    private router: Router, // <--- Router INYECTADO
+    private router: Router, 
     private navCtrl: NavController,
     private notaService: NotaService,
+    private archivoAdjuntoService: ArchivoAdjuntoService, 
     private carpetaService: CarpetaService,
     private authService: AuthService,
     private alertCtrl: AlertController,
     private toastCtrl: ToastController,
     private loadingCtrl: LoadingController,
     private cdr: ChangeDetectorRef,
-    private actionSheetCtrl: ActionSheetController // ActionSheetController INJECTED
+    private actionSheetCtrl: ActionSheetController 
 
   ) {
     console.log('[CarpetaPage] Constructor');
@@ -78,7 +86,6 @@ export class CarpetaPage implements OnInit, OnDestroy {
         const carpetaActual = todasLasCarpetas.find(c => c.carpeta_id === this.carpetaId);
         this.nombreCarpeta = carpetaActual ? carpetaActual.nombre : 'Carpeta no encontrada';
         console.log(`DEBUG: [CarpetaPage] cargarDatosIniciales - Folder name: "${this.nombreCarpeta}"`); // DEBUG: Folder name
-// ======== Start Modification ========
         // Determine if the current folder is the "General" folder (case-insensitive check)
         // And set canManageFolder accordingly.
         if (carpetaActual) {
@@ -89,7 +96,6 @@ export class CarpetaPage implements OnInit, OnDestroy {
             this.presentToast('The requested folder does not exist or you do not have access.', 'warning');
             // Consider navigating back if the folder is truly gone, e.g., this.goBack();
         }
-// ======== End Modification ========
         if (!carpetaActual) { // This part might be redundant if handled above, but kept for safety.
             // this.presentToast('La carpeta solicitada no existe o no tienes acceso.', 'warning');
         }
@@ -103,12 +109,13 @@ export class CarpetaPage implements OnInit, OnDestroy {
       }
     );
     this.cargarNotas(false); 
+    this.cargarArchivos(false); 
   }
 
   async cargarNotas(mostrarSpinnerGlobal: boolean = true) {
     if (!this.carpetaId) {
       console.warn('[CarpetaPage] cargarNotas llamado sin carpetaId.');
-      if(mostrarSpinnerGlobal) this.isLoading = false; // Asegurar que se quite el spinner si se llama sin ID
+      if(mostrarSpinnerGlobal) this.isLoading = false; 
       return;
     }
     if (mostrarSpinnerGlobal) this.isLoading = true;
@@ -132,6 +139,123 @@ export class CarpetaPage implements OnInit, OnDestroy {
       error: err => {
         console.error(`[CarpetaPage] Error al cargar notas:`, err);
         this.presentToast('Error al cargar las notas.', 'danger');
+      }
+    });
+  }
+
+
+    async cargarArchivos(mostrarSpinnerGlobal: boolean = true) {
+    if (!this.carpetaId) {
+      console.warn('DEBUG: [CarpetaPage] cargarArchivos llamado sin carpetaId.'); // DEBUG
+      if(mostrarSpinnerGlobal) this.isLoadingArchivos = false;
+      return;
+    }
+    if (mostrarSpinnerGlobal) this.isLoadingArchivos = true;
+    console.log(`DEBUG: [CarpetaPage] Cargando archivos para carpetaId ${this.carpetaId}`); // DEBUG
+
+    this.archivoAdjuntoService.getFilesForFolder(this.carpetaId).pipe(
+      finalize(() => {
+        if (mostrarSpinnerGlobal) this.isLoadingArchivos = false;
+        this.cdr.detectChanges();
+        console.log('DEBUG: [CarpetaPage] Carga de archivos finalizada.'); // DEBUG
+      })
+    ).subscribe({
+      next: archivosRecibidos => {
+        this.archivos = archivosRecibidos.sort((a, b) => 
+          new Date(b.fecha_subida).getTime() - new Date(a.fecha_subida).getTime()
+        ); // Ordenar por fecha de subida descendente
+        console.log('DEBUG: [CarpetaPage] Archivos cargados y ordenados:', this.archivos); // DEBUG
+      },
+      error: err => {
+        console.error('DEBUG: [CarpetaPage] Error al cargar archivos:', err); // DEBUG
+        this.presentToast(`Error al cargar los archivos adjuntos: ${err.message || 'Error desconocido'}`, 'danger');
+        this.isLoadingArchivos = false; // Asegurar que se quite el spinner en caso de error
+      }
+    });
+  }
+
+  onFileSelected(event: Event): void {
+    const element = event.currentTarget as HTMLInputElement;
+    const fileList: FileList | null = element.files;
+    if (fileList && fileList.length > 0) {
+      this.archivoParaSubir = fileList[0];
+      // Si el nombre del archivo está vacío, autocompletar con el nombre del archivo seleccionado (sin extensión)
+      if (!this.nuevoArchivoNombre.trim() && this.archivoParaSubir) {
+        this.nuevoArchivoNombre = this.archivoParaSubir.name.split('.').slice(0, -1).join('.');
+      }
+      console.log('DEBUG: [CarpetaPage] Archivo seleccionado:', this.archivoParaSubir.name); // DEBUG
+    } else {
+      this.archivoParaSubir = null;
+    }
+  }
+
+  async subirArchivo() {
+    if (!this.archivoParaSubir) {
+      this.presentToast('Por favor, selecciona un archivo para subir.', 'warning');
+      return;
+    }
+    if (!this.nuevoArchivoNombre.trim()) {
+      this.presentToast('El nombre del archivo es obligatorio.', 'warning');
+      return;
+    }
+    if (!this.carpetaId) {
+      this.presentToast('Error: No se pudo identificar la carpeta de destino.', 'danger');
+      return;
+    }
+
+    console.log(`DEBUG: [CarpetaPage] Intentando subir archivo: ${this.nuevoArchivoNombre}`); // DEBUG
+    this.isUploadingFile = true; // Activar estado de subida
+    const loading = await this.mostrarLoading('Subiendo archivo...');
+
+    this.archivoAdjuntoService.uploadFile(
+      this.carpetaId,
+      this.archivoParaSubir,
+      this.nuevoArchivoNombre.trim(),
+      this.nuevoArchivoDescripcion.trim() || undefined // Enviar undefined si está vacío
+    ).pipe(
+      finalize(() => {
+        loading.dismiss();
+        this.isUploadingFile = false; // Desactivar estado de subida
+      })
+    ).subscribe({
+      next: (response: UploadResponse) => {
+        console.log('DEBUG: [CarpetaPage] Archivo subido, respuesta:', response); // DEBUG
+        this.presentToast('Archivo subido exitosamente.', 'success');
+        this.nuevoArchivoNombre = '';
+        this.nuevoArchivoDescripcion = '';
+        this.archivoParaSubir = null;
+        // Limpiar el input de archivo (esto es un poco hacky, pero común)
+        const fileInput = document.getElementById('fileUploadInput') as HTMLInputElement;
+        if (fileInput) fileInput.value = '';
+        
+        this.cargarArchivos(false); // Recargar la lista de archivos
+      },
+      error: (error) => {
+        console.error('DEBUG: [CarpetaPage] Error al subir archivo:', error); // DEBUG
+        this.presentToast(`Error al subir el archivo: ${error.message || 'Error desconocido'}`, 'danger');
+      }
+    });
+  }
+
+  async descargarArchivo(archivo: ArchivoAdjuntoInfo) {
+    if (!this.currentUserUid) { // UID es necesario para la autorización en el servicio
+        this.presentToast('Error de autenticación. No se puede descargar.', 'danger');
+        return;
+    }
+    console.log(`DEBUG: [CarpetaPage] Intentando descargar archivoId: ${archivo.archivo_id}, Nombre: ${archivo.nombre_archivo}`); // DEBUG
+    const loading = await this.mostrarLoading('Descargando archivo...');
+
+    this.archivoAdjuntoService.downloadFile(archivo.archivo_id).pipe(
+      finalize(() => loading.dismiss())
+    ).subscribe({
+      next: (blob) => {
+        saveAs(blob, archivo.nombre_archivo); // Usar file-saver para iniciar la descarga
+        console.log(`DEBUG: [CarpetaPage] Archivo ${archivo.nombre_archivo} preparado para descarga.`); // DEBUG
+        this.presentToast('Archivo descargado.', 'success');
+      },
+      error: (err) => {
+        console.error('DEBUG: [CarpetaPage] Error al descargar archivo:', err); // DEBUG
+        this.presentToast(`Error al descargar el archivo: ${err.message || 'Error desconocido'}`, 'danger');
       }
     });
   }

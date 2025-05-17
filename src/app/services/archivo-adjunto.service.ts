@@ -1,0 +1,119 @@
+//src\app\services\archivo-adjunto.service.ts
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpParams, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
+import { AuthService } from './auth.service';
+
+// Interfaz para la información de un archivo adjunto (para listado)
+export interface ArchivoAdjuntoInfo {
+  archivo_id: number;
+  nombre_archivo: string;
+  descripcion?: string;
+  nombre_mime: string;
+  fecha_subida: string; // ISO String
+}
+
+// Interfaz para la respuesta de subida de archivo
+export interface UploadResponse {
+  attached: boolean;
+  message: string;
+  // Podrías añadir el ID del archivo creado si el backend lo devuelve
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ArchivoAdjuntoService {
+  private apiUrlBase = 'http://127.0.0.1:8000/api'; // URL base de tu API
+
+  constructor(private http: HttpClient, private authService: AuthService) {
+    console.log('[ArchivoAdjuntoService] Constructor. API URL Base:', this.apiUrlBase);
+  }
+
+  private getCurrentUid(): string | null {
+    const user = this.authService.getCurrentUser();
+    return user ? user.uid : null;
+  }
+
+  // Método para subir un archivo a una carpeta
+  uploadFile(carpetaId: number, file: File, nombreArchivo: string, descripcion?: string): Observable<UploadResponse> {
+    const uid = this.getCurrentUid();
+    if (!uid) {
+      return throwError(() => new Error('Usuario no autenticado. No se puede subir el archivo.'));
+    }
+    console.log(`DEBUG: [ArchivoAdjuntoService] Iniciando subida de archivo a carpetaId: ${carpetaId}`); // DEBUG: Inicio de subida
+
+    const formData = new FormData();
+    formData.append('file_content', file, file.name); // 'file_content' debe coincidir con el esperado en Django request.FILES
+    formData.append('nombre_archivo', nombreArchivo);
+    if (descripcion) {
+      formData.append('descripcion', descripcion);
+    }
+    formData.append('uid', uid); // UID para la autorización en el backend
+
+    // No se necesita HttpHeaders con 'Content-Type': 'multipart/form-data' explícitamente,
+    // HttpClient lo maneja automáticamente cuando el body es FormData.
+
+    const url = `${this.apiUrlBase}/folders/${carpetaId}/attachments/`;
+    console.log(`DEBUG: [ArchivoAdjuntoService] Enviando POST a: ${url} con FormData.`); // DEBUG: Detalles de la llamada
+
+    return this.http.post<UploadResponse>(url, formData)
+      .pipe(
+        tap(response => console.log('DEBUG: [ArchivoAdjuntoService] Respuesta de subida de archivo:', response)), // DEBUG: Respuesta de subida
+        catchError(this.handleError)
+      );
+  }
+
+  // Método para obtener la lista de archivos de una carpeta
+  getFilesForFolder(carpetaId: number): Observable<ArchivoAdjuntoInfo[]> {
+    const uid = this.getCurrentUid();
+    if (!uid) {
+      return throwError(() => new Error('Usuario no autenticado. No se pueden listar archivos.'));
+    }
+    console.log(`DEBUG: [ArchivoAdjuntoService] Solicitando archivos para carpetaId: ${carpetaId}`); // DEBUG: Solicitando archivos
+
+    const params = new HttpParams().set('uid', uid);
+    const url = `${this.apiUrlBase}/folders/${carpetaId}/attachments/`;
+    console.log(`DEBUG: [ArchivoAdjuntoService] Enviando GET a: ${url} con params: ${params.toString()}`); // DEBUG: Detalles de la llamada
+
+    return this.http.get<{ attachments: ArchivoAdjuntoInfo[] }>(url, { params })
+      .pipe(
+        map(response => response.attachments || []),
+        tap(archivos => console.log(`DEBUG: [ArchivoAdjuntoService] Archivos recibidos para carpeta ${carpetaId}:`, archivos)), // DEBUG: Archivos recibidos
+        catchError(this.handleError)
+      );
+  }
+
+  // Método para descargar un archivo
+  downloadFile(archivoId: number): Observable<Blob> {
+    const uid = this.getCurrentUid();
+    if (!uid) {
+      return throwError(() => new Error('Usuario no autenticado. No se puede descargar el archivo.'));
+    }
+    console.log(`DEBUG: [ArchivoAdjuntoService] Solicitando descarga para archivoId: ${archivoId}`); // DEBUG: Solicitando descarga
+
+    const params = new HttpParams().set('uid', uid);
+    const url = `${this.apiUrlBase}/attachments/${archivoId}/download/`;
+    console.log(`DEBUG: [ArchivoAdjuntoService] Enviando GET a: ${url} para descarga, con params: ${params.toString()}`); // DEBUG: Detalles de la llamada
+
+    return this.http.get(url, { params, responseType: 'blob' }) // responseType: 'blob' es crucial
+      .pipe(
+        tap(() => console.log(`DEBUG: [ArchivoAdjuntoService] Blob del archivo ${archivoId} recibido.`)), // DEBUG: Blob recibido
+        catchError(this.handleError)
+      );
+  }
+
+  private handleError(error: HttpErrorResponse) {
+    console.error('[ArchivoAdjuntoService] Ocurrió un error HTTP:', error.message, 'Status:', error.status, 'Body:', error.error); // Log del error
+    let errorMessage = 'Algo salió mal con la operación de archivos; por favor, inténtalo de nuevo más tarde.';
+    if (error.error && typeof error.error === 'object' && error.error.error) {
+        errorMessage = error.error.error;
+    } else if (typeof error.error === 'string' && error.error.length < 200) {
+        errorMessage = error.error;
+    } else if (error.status === 0) {
+        errorMessage = 'No se pudo conectar con el servidor. Verifica tu conexión a internet.';
+    }
+    return throwError(() => new Error(errorMessage));
+  }
+}
