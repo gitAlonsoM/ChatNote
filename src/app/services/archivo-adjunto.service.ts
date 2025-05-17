@@ -18,7 +18,6 @@ export interface ArchivoAdjuntoInfo {
 export interface UploadResponse {
   attached: boolean;
   message: string;
-  // Podrías añadir el ID del archivo creado si el backend lo devuelve
 }
 
 @Injectable({
@@ -94,8 +93,8 @@ export class ArchivoAdjuntoService {
     console.log(`DEBUG: [ArchivoAdjuntoService] Solicitando descarga para archivoId: ${archivoId}`); // DEBUG: Solicitando descarga
 
     const params = new HttpParams().set('uid', uid);
-    const url = `${this.apiUrlBase}/attachments/${archivoId}/download/`;
-    console.log(`DEBUG: [ArchivoAdjuntoService] Enviando GET a: ${url} para descarga, con params: ${params.toString()}`); // DEBUG: Detalles de la llamada
+    const url = `${this.apiUrlBase}/attachments/${archivoId}/`; 
+    console.log(`DEBUG: [ArchivoAdjuntoService] Enviando DELETE a: ${url} con params: ${params.toString()}`); 
 
     return this.http.get(url, { params, responseType: 'blob' }) // responseType: 'blob' es crucial
       .pipe(
@@ -103,6 +102,51 @@ export class ArchivoAdjuntoService {
         catchError(this.handleError)
       );
   }
+
+
+  updateFileDetails(archivoId: number, nombreArchivo: string, descripcion?: string): Observable<any> {
+    const uid = this.getCurrentUid();
+    if (!uid) {
+      return throwError(() => new Error('Usuario no autenticado. No se pueden actualizar los detalles del archivo.'));
+    }
+    console.log(`DEBUG: [ArchivoAdjuntoService] Actualizando detalles para archivoId: ${archivoId}`); // DEBUG
+
+    const payload = {
+      uid: uid, // El UID se envía en el cuerpo para PUT según la vista de Django
+      nombre_archivo: nombreArchivo,
+      descripcion: descripcion === undefined || descripcion === null ? null : descripcion // Enviar null si está vacío o no definido
+    };
+    // HttpClient por defecto usa application/json para PUT con objetos
+    const httpOptions = { headers: new HttpHeaders({ 'Content-Type': 'application/json' }) };
+
+    const url = `${this.apiUrlBase}/attachments/${archivoId}/`;
+    console.log(`DEBUG: [ArchivoAdjuntoService] Enviando PUT a: ${url} con payload:`, payload); // DEBUG
+
+    return this.http.put<any>(url, payload, httpOptions)
+      .pipe(
+        tap(response => console.log('DEBUG: [ArchivoAdjuntoService] Respuesta de actualizar detalles:', response)), // DEBUG
+        catchError(this.handleError)
+      );
+  }
+
+  // Método para eliminar un archivo
+  deleteFile(archivoId: number): Observable<any> {
+    const uid = this.getCurrentUid();
+    if (!uid) {
+      return throwError(() => new Error('Usuario no autenticado. No se puede eliminar el archivo.'));
+    }
+    console.log(`DEBUG: [ArchivoAdjuntoService] Solicitando eliminación para archivoId: ${archivoId}`); // DEBUG
+
+    const params = new HttpParams().set('uid', uid); // UID como query param para DELETE
+    const url = `${this.apiUrlBase}/attachments/${archivoId}/`; // URL NUEVA Y CORRECTA: apunta a attachment_detail_view que maneja GET para descarga
+    console.log(`DEBUG: [ArchivoAdjuntoService] Enviando GET a: ${url} para descarga, con params: ${params.toString()}`); // DEBUG: Detalles de la llamada actualizada
+    return this.http.delete<any>(url, { params })
+      .pipe(
+        tap(response => console.log('DEBUG: [ArchivoAdjuntoService] Respuesta de eliminar archivo:', response)), // DEBUG
+        catchError(this.handleError)
+      );
+  }
+
 
   private handleError(error: HttpErrorResponse) {
     console.error('[ArchivoAdjuntoService] Ocurrió un error HTTP:', error.message, 'Status:', error.status, 'Body:', error.error); // Log del error

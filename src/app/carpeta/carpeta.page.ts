@@ -8,8 +8,8 @@ import { AuthService } from '../services/auth.service';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators'; 
 import { HttpErrorResponse } from '@angular/common/http'; 
-import { ArchivoAdjuntoService, ArchivoAdjuntoInfo, UploadResponse } from '../services/archivo-adjunto.service'; // Importar servicio y tipos de archivos
-import { saveAs } from 'file-saver'; // Para descargar archivos. Necesitarás: npm install file-saver @types/file-saver --save-dev
+import { ArchivoAdjuntoService, ArchivoAdjuntoInfo, UploadResponse } from '../services/archivo-adjunto.service'; 
+import { saveAs } from 'file-saver'; 
 
 @Component({
   selector: 'app-carpeta',
@@ -259,6 +259,120 @@ export class CarpetaPage implements OnInit, OnDestroy {
       }
     });
   }
+
+ async presentArchivoActions(archivo: ArchivoAdjuntoInfo) {
+    console.log(`DEBUG: [CarpetaPage] presentArchivoActions para archivoId: ${archivo.archivo_id}`); // DEBUG
+
+    const alert = await this.alertCtrl.create({
+      header: 'Gestionar Archivo',
+      // subHeader: archivo.nombre_archivo, // Podrías usar esto si quieres
+      inputs: [
+        {
+          name: 'nombre_archivo',
+          type: 'text',
+          value: archivo.nombre_archivo,
+          placeholder: 'Nuevo nombre del archivo (*)',
+          attributes: {
+            required: true
+          }
+        },
+        {
+          name: 'descripcion',
+          type: 'textarea',
+          value: archivo.descripcion || '', // Mostrar vacío si es null/undefined
+          placeholder: 'Nueva descripción (opcional)'
+        }
+      ],
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel',
+          handler: () => {
+            console.log('DEBUG: [CarpetaPage] Gestión de archivo cancelada.'); // DEBUG
+          }
+        },
+        {
+          text: 'Guardar Cambios',
+          handler: async (data) => {
+            const nuevoNombre = data.nombre_archivo ? data.nombre_archivo.trim() : '';
+            const nuevaDescripcion = data.descripcion ? data.descripcion.trim() : null; // Enviar null si está vacío
+
+            if (!nuevoNombre) {
+              this.presentToast('El nombre del archivo no puede estar vacío.', 'warning');
+              return false; // Evita que el alert se cierre
+            }
+
+            if (nuevoNombre === archivo.nombre_archivo && (nuevaDescripcion === archivo.descripcion || (!nuevaDescripcion && !archivo.descripcion))) {
+              this.presentToast('No se realizaron cambios.', 'primary');
+              return true;
+            }
+
+            console.log(`DEBUG: [CarpetaPage] Guardando cambios para archivoId: ${archivo.archivo_id}. Nuevo nombre: "${nuevoNombre}", Nueva descripción: "${nuevaDescripcion}"`); // DEBUG
+            const loading = await this.mostrarLoading('Actualizando archivo...');
+            this.archivoAdjuntoService.updateFileDetails(archivo.archivo_id, nuevoNombre, nuevaDescripcion ?? undefined).pipe(
+              finalize(() => loading.dismiss())
+            ).subscribe({
+              next: () => {
+                this.presentToast('Detalles del archivo actualizados.', 'success');
+                this.cargarArchivos(false); // Recargar lista de archivos
+              },
+              error: (err) => {
+                this.presentToast(`Error al actualizar el archivo: ${err.message || 'Error desconocido'}`, 'danger');
+              }
+            });
+            return true;
+          }
+        },
+        {
+          text: 'Eliminar Archivo',
+          role: 'destructive', // Para darle un estilo distintivo (rojo usualmente)
+          cssClass: 'alert-button-destructive',
+          handler: () => {
+            // No es necesario hacer el console.log aquí porque se hará en confirmDeleteArchivo
+            this.confirmDeleteArchivo(archivo);
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  async confirmDeleteArchivo(archivo: ArchivoAdjuntoInfo) {
+    console.log(`DEBUG: [CarpetaPage] confirmDeleteArchivo para archivoId: ${archivo.archivo_id}`); // DEBUG
+    const alert = await this.alertCtrl.create({
+      header: 'Confirmar Eliminación',
+      message: `¿Estás seguro de que deseas eliminar el archivo "${archivo.nombre_archivo}"? Esta acción no se puede deshacer.`,
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel',
+          cssClass: 'alert-button-cancel'
+        },
+        {
+          text: 'Eliminar',
+          role: 'destructive',
+          cssClass: 'alert-button-destructive',
+          handler: async () => {
+            console.log(`DEBUG: [CarpetaPage] Eliminación confirmada para archivoId: ${archivo.archivo_id}`); // DEBUG
+            const loading = await this.mostrarLoading('Eliminando archivo...');
+            this.archivoAdjuntoService.deleteFile(archivo.archivo_id).pipe(
+              finalize(() => loading.dismiss())
+            ).subscribe({
+              next: () => {
+                this.presentToast('Archivo eliminado.', 'success');
+                this.cargarArchivos(false); // Recargar lista de archivos
+              },
+              error: (err) => {
+                this.presentToast(`Error al eliminar el archivo: ${err.message || 'Error desconocido'}`, 'danger');
+              }
+            });
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
 
   async mostrarLoading(mensaje: string = 'Procesando...') {
     const loading = await this.loadingCtrl.create({
