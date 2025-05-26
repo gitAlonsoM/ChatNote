@@ -19,103 +19,120 @@ import { saveAs } from 'file-saver';
 export class CarpetaPage implements OnInit, OnDestroy {
   carpetaId: number | null = null;
   nombreCarpeta: string = 'Cargando...';
-  canManageFolder: boolean = false; 
+  canManageFolder: boolean = false;
   notas: Nota[] = [];
   isLoading: boolean = false;
   nuevaNotaContenido: string = '';
-  archivos: ArchivoAdjuntoInfo[] = []; 
-  isLoadingArchivos: boolean = false;  
-  nuevoArchivoNombre: string = '';       
-  nuevoArchivoDescripcion: string = ''; 
-  archivoParaSubir: File | null = null; 
+  archivos: ArchivoAdjuntoInfo[] = [];
+  isLoadingArchivos: boolean = false;
+  nuevoArchivoNombre: string = '';
+  nuevoArchivoDescripcion: string = '';
+  archivoParaSubir: File | null = null;
   isUploadingFile: boolean = false;
   private routeSubscription: Subscription | undefined;
-  private currentUserUid: string | null = null;
+  // currentUserUid ya no se inicializa aquí, se obtiene de forma asíncrona en ngOnInit
+  private currentUserUid: string | null = null; // Se mantiene la propiedad para acceso posterior si es necesario
 
   constructor(
     private route: ActivatedRoute,
-    private router: Router, 
+    private router: Router,
     private navCtrl: NavController,
     private notaService: NotaService,
-    private archivoAdjuntoService: ArchivoAdjuntoService, 
+    private archivoAdjuntoService: ArchivoAdjuntoService,
     private carpetaService: CarpetaService,
     private authService: AuthService,
     private alertCtrl: AlertController,
     private toastCtrl: ToastController,
     private loadingCtrl: LoadingController,
     private cdr: ChangeDetectorRef,
-    private actionSheetCtrl: ActionSheetController 
+    private actionSheetCtrl: ActionSheetController
 
   ) {
     console.log('[CarpetaPage] Constructor');
-    const user = this.authService.getCurrentUser();
-    this.currentUserUid = user ? user.uid : null;
+    // **AQUÍ NO SE ACCEDE A PROMESAS NI SE ASIGNAN VALORES ASÍNCRONOS.**
+    // La inicialización asíncrona se realiza en ngOnInit.
   }
 
   trackNotaById(index: number, nota: Nota): number {
     return nota.nota_id;
   }
 
-  ngOnInit() {
+  async ngOnInit() { // ngOnInit ahora es asíncrono
     console.log('[CarpetaPage] ngOnInit');
-    // isLoading se maneja en cargarDatosIniciales y cargarNotas
-    this.routeSubscription = this.route.paramMap.subscribe(params => {
-      const id = params.get('id');
-      if (id && this.currentUserUid) {
-        this.carpetaId = +id;
-        console.log(`[CarpetaPage] carpetaId: ${this.carpetaId}, currentUserUid: ${this.currentUserUid}`);
-        this.cargarDatosIniciales();
-      } else {
-        console.error('[CarpetaPage] No se encontró el ID de la carpeta o UID del usuario.');
-        this.presentToast('Error: No se pudo identificar la carpeta o el usuario.', 'danger');
-        this.goBack(); // Usar goBack para manejar la navegación atrás
-      }
-    });
+
+    try {
+      // Espera a que la promesa de getCurrentUser() se resuelva
+      const user = await this.authService.getCurrentUser();
+      this.currentUserUid = user ? user.uid : null;
+      console.log('[CarpetaPage] UID del usuario actual obtenido en ngOnInit:', this.currentUserUid);
+
+      // isLoading se maneja en cargarDatosIniciales y cargarNotas
+      this.routeSubscription = this.route.paramMap.subscribe(params => {
+        const id = params.get('id');
+        if (id && this.currentUserUid) { // Asegúrate de que el UID esté disponible aquí
+          this.carpetaId = +id;
+          console.log(`[CarpetaPage] carpetaId: ${this.carpetaId}, currentUserUid: ${this.currentUserUid}`);
+          this.cargarDatosIniciales();
+        } else {
+          console.error('[CarpetaPage] No se encontró el ID de la carpeta o UID del usuario en ngOnInit.');
+          this.presentToast('Error: No se pudo identificar la carpeta o el usuario.', 'danger');
+          this.goBack(); // Usar goBack para manejar la navegación atrás
+        }
+      });
+    } catch (error) {
+      console.error('[CarpetaPage] Error al obtener el usuario actual en ngOnInit:', error);
+      this.presentToast('Error de autenticación. Por favor, inicia sesión de nuevo.', 'danger');
+      // Podrías redirigir al usuario a la página de inicio de sesión aquí
+      this.router.navigate(['/login'], { replaceUrl: true });
+    }
   }
+
+  // ---
 
   async cargarDatosIniciales() {
     if (!this.carpetaId) {
       console.warn('[CarpetaPage] cargarDatosIniciales - No folderId available.'); // DEBUG: Warning
       return;
     }
-    this.isLoading = true; 
+    this.isLoading = true;
     console.log('[CarpetaPage] Cargando datos iniciales...'); // DEBUG: Loading data
 
+    // No se necesita currentUserUid aquí directamente, CarpetaService lo obtiene
     this.carpetaService.listPersonalFolders().subscribe(
       todasLasCarpetas => {
         const carpetaActual = todasLasCarpetas.find(c => c.carpeta_id === this.carpetaId);
         this.nombreCarpeta = carpetaActual ? carpetaActual.nombre : 'Carpeta no encontrada';
-        console.log(`DEBUG: [CarpetaPage] cargarDatosIniciales - Folder name: "${this.nombreCarpeta}"`); // DEBUG: Folder name
-        // Determine if the current folder is the "General" folder (case-insensitive check)
-        // And set canManageFolder accordingly.
+        console.log(`DEBUG: [CarpetaPage] cargarDatosIniciales - Nombre de la carpeta: "${this.nombreCarpeta}"`); // DEBUG: Folder name
+        // Determinar si la carpeta actual es la carpeta "General" (comprobación que no distingue entre mayúsculas y minúsculas)
+        // Y establecer canManageFolder en consecuencia.
         if (carpetaActual) {
-            this.canManageFolder = carpetaActual.nombre.toLowerCase() !== 'general';
-            console.log(`DEBUG: [CarpetaPage] cargarDatosIniciales - canManageFolder set to: ${this.canManageFolder} (isGeneralFolder: ${!this.canManageFolder})`); // DEBUG: Management status
+          this.canManageFolder = carpetaActual.nombre.toLowerCase() !== 'general';
+          console.log(`DEBUG: [CarpetaPage] cargarDatosIniciales - canManageFolder establecido en: ${this.canManageFolder} (esCarpetaGeneral: ${!this.canManageFolder})`); // DEBUG: Management status
         } else {
-            this.canManageFolder = false; // If folder not found, cannot manage it.
-            this.presentToast('The requested folder does not exist or you do not have access.', 'warning');
-            // Consider navigating back if the folder is truly gone, e.g., this.goBack();
+          this.canManageFolder = false; // Si no se encuentra la carpeta, no se puede gestionar.
+          this.presentToast('La carpeta solicitada no existe o no tienes acceso.', 'warning');
+          // Considera navegar hacia atrás si la carpeta realmente ha desaparecido, por ejemplo, this.goBack();
         }
-        if (!carpetaActual) { // This part might be redundant if handled above, but kept for safety.
-            // this.presentToast('La carpeta solicitada no existe o no tienes acceso.', 'warning');
+        if (!carpetaActual) { // Esta parte podría ser redundante si se maneja arriba, pero se mantiene por seguridad.
+          // this.presentToast('La carpeta solicitada no existe o no tienes acceso.', 'warning');
         }
-        this.cdr.detectChanges(); // Ensure UI updates
+        this.cdr.detectChanges(); // Asegurar que la UI se actualice
       },
       error => {
         console.error('[CarpetaPage] Error al cargar lista de carpetas para obtener nombre:', error); // DEBUG: Error
         this.nombreCarpeta = 'Error al cargar nombre';
-        this.canManageFolder = false; // Cannot manage if there's an error loading name
-        this.cdr.detectChanges(); // Ensure UI updates
+        this.canManageFolder = false; // No se puede gestionar si hay un error al cargar el nombre
+        this.cdr.detectChanges(); // Asegurar que la UI se actualice
       }
     );
-    this.cargarNotas(false); 
-    this.cargarArchivos(false); 
+    this.cargarNotas(false);
+    this.cargarArchivos(false);
   }
 
   async cargarNotas(mostrarSpinnerGlobal: boolean = true) {
     if (!this.carpetaId) {
       console.warn('[CarpetaPage] cargarNotas llamado sin carpetaId.');
-      if(mostrarSpinnerGlobal) this.isLoading = false; 
+      if (mostrarSpinnerGlobal) this.isLoading = false;
       return;
     }
     if (mostrarSpinnerGlobal) this.isLoading = true;
@@ -143,11 +160,10 @@ export class CarpetaPage implements OnInit, OnDestroy {
     });
   }
 
-
-    async cargarArchivos(mostrarSpinnerGlobal: boolean = true) {
+  async cargarArchivos(mostrarSpinnerGlobal: boolean = true) {
     if (!this.carpetaId) {
       console.warn('DEBUG: [CarpetaPage] cargarArchivos llamado sin carpetaId.'); // DEBUG
-      if(mostrarSpinnerGlobal) this.isLoadingArchivos = false;
+      if (mostrarSpinnerGlobal) this.isLoadingArchivos = false;
       return;
     }
     if (mostrarSpinnerGlobal) this.isLoadingArchivos = true;
@@ -161,7 +177,7 @@ export class CarpetaPage implements OnInit, OnDestroy {
       })
     ).subscribe({
       next: archivosRecibidos => {
-        this.archivos = archivosRecibidos.sort((a, b) => 
+        this.archivos = archivosRecibidos.sort((a, b) =>
           new Date(b.fecha_subida).getTime() - new Date(a.fecha_subida).getTime()
         ); // Ordenar por fecha de subida descendente
         console.log('DEBUG: [CarpetaPage] Archivos cargados y ordenados:', this.archivos); // DEBUG
@@ -227,7 +243,7 @@ export class CarpetaPage implements OnInit, OnDestroy {
         // Limpiar el input de archivo (esto es un poco hacky, pero común)
         const fileInput = document.getElementById('fileUploadInput') as HTMLInputElement;
         if (fileInput) fileInput.value = '';
-        
+
         this.cargarArchivos(false); // Recargar la lista de archivos
       },
       error: (error) => {
@@ -238,9 +254,10 @@ export class CarpetaPage implements OnInit, OnDestroy {
   }
 
   async descargarArchivo(archivo: ArchivoAdjuntoInfo) {
+    // currentUserUid ya se obtiene en ngOnInit
     if (!this.currentUserUid) { // UID es necesario para la autorización en el servicio
-        this.presentToast('Error de autenticación. No se puede descargar.', 'danger');
-        return;
+      this.presentToast('Error de autenticación. No se puede descargar.', 'danger');
+      return;
     }
     console.log(`DEBUG: [CarpetaPage] Intentando descargar archivoId: ${archivo.archivo_id}, Nombre: ${archivo.nombre_archivo}`); // DEBUG
     const loading = await this.mostrarLoading('Descargando archivo...');
@@ -260,7 +277,7 @@ export class CarpetaPage implements OnInit, OnDestroy {
     });
   }
 
- async presentArchivoActions(archivo: ArchivoAdjuntoInfo) {
+  async presentArchivoActions(archivo: ArchivoAdjuntoInfo) {
     console.log(`DEBUG: [CarpetaPage] presentArchivoActions para archivoId: ${archivo.archivo_id}`); // DEBUG
 
     const alert = await this.alertCtrl.create({
@@ -448,11 +465,11 @@ export class CarpetaPage implements OnInit, OnDestroy {
                 }
               });
             } else if (!nuevoContenido) {
-                this.presentToast('El contenido no puede estar vacío.', 'warning');
-                return false; // Evita que el alert se cierre si la validación falla
+              this.presentToast('El contenido no puede estar vacío.', 'warning');
+              return false; // Evita que el alert se cierre si la validación falla
             } else {
-                console.log('[CarpetaPage] Edición cancelada o sin cambios.');
-                return true;
+              console.log('[CarpetaPage] Edición cancelada o sin cambios.');
+              return true;
             }
             return true;
           }
@@ -496,44 +513,44 @@ export class CarpetaPage implements OnInit, OnDestroy {
   }
 
 
-      async presentFolderActions() { 
-    console.log('DEBUG: [CarpetaPage] presentFolderActions called for folderId:', this.carpetaId); 
-    if (!this.canManageFolder) { // Add guard to prevent showing actions for "General" folder
-        console.log('DEBUG: [CarpetaPage] Management actions are disabled for this folder (likely "General").'); // DEBUG: Actions disabled
-  
-        return;
+  async presentFolderActions() {
+    console.log('DEBUG: [CarpetaPage] presentFolderActions called for folderId:', this.carpetaId);
+    if (!this.canManageFolder) { // Agrega un guard para evitar mostrar acciones para la carpeta "General"
+      console.log('DEBUG: [CarpetaPage] Las acciones de gestión están deshabilitadas para esta carpeta (probablemente "General").'); // DEBUG: Acciones deshabilitadas
+
+      return;
     }
-    if (!this.carpetaId) { // This check is somewhat redundant if canManageFolder handles it, but safe.
-        this.presentToast('Cannot manage folder: Folder ID is not available.', 'danger');
-        return;
+    if (!this.carpetaId) { // Esta comprobación es algo redundante si canManageFolder lo maneja, pero es segura.
+      this.presentToast('No se puede gestionar la carpeta: el ID de la carpeta no está disponible.', 'danger');
+      return;
     }
 
     const actionSheet = await this.actionSheetCtrl.create({
-      header: `Actions for: ${this.nombreCarpeta}`, 
+      header: `Acciones para: ${this.nombreCarpeta}`,
       buttons: [
         {
-          text: 'Rename Folder',
-          icon: 'create-outline', 
+          text: 'Renombrar Carpeta',
+          icon: 'create-outline',
           handler: () => {
-            console.log('DEBUG: [CarpetaPage] "Rename Folder" action selected.'); 
+            console.log('DEBUG: [CarpetaPage] Acción "Renombrar Carpeta" seleccionada.');
             this.promptRenameCurrentFolder();
           }
         },
         {
-          text: 'Delete Folder',
-          role: 'destructive', 
-          icon: 'trash-outline', 
+          text: 'Eliminar Carpeta',
+          role: 'destructive',
+          icon: 'trash-outline',
           handler: () => {
-            console.log('DEBUG: [CarpetaPage] "Delete Folder" action selected.'); 
+            console.log('DEBUG: [CarpetaPage] Acción "Eliminar Carpeta" seleccionada.');
             this.confirmDeleteCurrentFolder();
           }
         },
         {
-          text: 'Cancel',
-          icon: 'close-outline', 
+          text: 'Cancelar',
+          icon: 'close-outline',
           role: 'cancel',
           handler: () => {
-            console.log('DEBUG: [CarpetaPage] Folder actions cancelled.'); 
+            console.log('DEBUG: [CarpetaPage] Acciones de carpeta canceladas.');
           }
         }
       ]
@@ -541,54 +558,54 @@ export class CarpetaPage implements OnInit, OnDestroy {
     await actionSheet.present();
   }
 
-  async promptRenameCurrentFolder() { // Method to prompt user for new folder name
-    console.log('DEBUG: [CarpetaPage] promptRenameCurrentFolder called.'); // DEBUG: Log prompt
+  async promptRenameCurrentFolder() { // Método para solicitar al usuario el nuevo nombre de la carpeta
+    console.log('DEBUG: [CarpetaPage] promptRenameCurrentFolder llamado.'); // DEBUG: Log del prompt
     if (!this.carpetaId) {
-        console.error('DEBUG: [CarpetaPage] Cannot rename, folderId is null.');
-        return;
+      console.error('DEBUG: [CarpetaPage] No se puede renombrar, carpetaId es nulo.');
+      return;
     }
 
     const alert = await this.alertCtrl.create({
-      header: 'Rename Folder',
+      header: 'Renombrar Carpeta',
       inputs: [
         {
           name: 'newName',
           type: 'text',
-          value: this.nombreCarpeta, // Pre-fill with the current folder name
-          placeholder: 'Enter new folder name'
+          value: this.nombreCarpeta, // Rellenar con el nombre actual de la carpeta
+          placeholder: 'Ingresa el nuevo nombre de la carpeta'
         }
       ],
       buttons: [
-        { text: 'Cancel', role: 'cancel' },
+        { text: 'Cancelar', role: 'cancel' },
         {
-          text: 'Save',
+          text: 'Guardar',
           handler: async (data) => {
             const newName = data.newName ? data.newName.trim() : '';
             if (!newName) {
-              this.presentToast('Folder name cannot be empty.', 'warning');
-              return false; // Prevent alert from closing if validation fails
+              this.presentToast('El nombre de la carpeta no puede estar vacío.', 'warning');
+              return false; // Evita que la alerta se cierre si falla la validación
             }
             if (newName === this.nombreCarpeta) {
-              this.presentToast('The new name is the same as the current one. No changes made.', 'primary');
-              return true; // Close alert, no action needed
+              this.presentToast('El nuevo nombre es el mismo que el actual. No se realizaron cambios.', 'primary');
+              return true; // Cierra la alerta, no se necesita acción
             }
 
-            console.log(`DEBUG: [CarpetaPage] Attempting to rename folderId ${this.carpetaId} from "${this.nombreCarpeta}" to "${newName}"`); // DEBUG: Log rename attempt
-            const loading = await this.mostrarLoading('Renaming folder...');
+            console.log(`DEBUG: [CarpetaPage] Intentando renombrar la carpetaId ${this.carpetaId} de "${this.nombreCarpeta}" a "${newName}"`); // DEBUG: Log del intento de renombrar
+            const loading = await this.mostrarLoading('Renombrando carpeta...');
             this.carpetaService.renameFolder(this.carpetaId!, newName).pipe(
               finalize(() => loading.dismiss())
             ).subscribe({
               next: (response) => {
-                console.log('DEBUG: [CarpetaPage] renameFolder successful response:', response); // DEBUG: Log success
-                this.nombreCarpeta = newName; // Update the local folder name
-                this.cdr.detectChanges(); // Manually trigger change detection to update title
-                this.presentToast('Folder renamed successfully.', 'success');
-                // If this page is part of a larger app state, consider emitting an event
-                // or using a shared service to notify other components (e.g., a folder list elsewhere)
+                console.log('DEBUG: [CarpetaPage] Respuesta exitosa de renameFolder:', response); // DEBUG: Log de éxito
+                this.nombreCarpeta = newName; // Actualiza el nombre de la carpeta localmente
+                this.cdr.detectChanges(); // Activa manualmente la detección de cambios para actualizar el título
+                this.presentToast('Carpeta renombrada exitosamente.', 'success');
+                // Si esta página es parte de un estado de aplicación más grande, considera emitir un evento
+                // o usar un servicio compartido para notificar a otros componentes (por ejemplo, una lista de carpetas en otro lugar)
               },
               error: (error: HttpErrorResponse) => {
-                console.error('DEBUG: [CarpetaPage] renameFolder error:', error); // DEBUG: Log error
-                let userMessage = 'Failed to rename folder. Please try again.';
+                console.error('DEBUG: [CarpetaPage] Error en renameFolder:', error); // DEBUG: Log del error
+                let userMessage = 'No se pudo renombrar la carpeta. Por favor, inténtalo de nuevo.';
                 let recommendation = '';
 
                 if (error.error && typeof error.error === 'object') {
@@ -599,16 +616,16 @@ export class CarpetaPage implements OnInit, OnDestroy {
                   if (errResponse.recommendation) {
                     recommendation = errResponse.recommendation;
                   }
-                } else if (error.message) { // Fallback for generic errors
+                } else if (error.message) { // Fallback para errores genéricos
                   userMessage = error.message;
                 }
-                
-                // Display the specific error message and recommendation if available
+
+                // Mostrar el mensaje de error específico y la recomendación si están disponibles
                 const fullMessage = recommendation ? `${userMessage} ${recommendation}` : userMessage;
-                this.presentToast(fullMessage, 'danger', recommendation ? 6000 : 4000); // Longer duration if there's a recommendation
+                this.presentToast(fullMessage, 'danger', recommendation ? 6000 : 4000); // Duración más larga si hay una recomendación
               }
             });
-            return true; // Allow alert to close
+            return true; // Permite que la alerta se cierre
           }
         }
       ]
@@ -616,39 +633,39 @@ export class CarpetaPage implements OnInit, OnDestroy {
     await alert.present();
   }
 
-  async confirmDeleteCurrentFolder() { // Method to confirm folder deletion
-    console.log('DEBUG: [CarpetaPage] confirmDeleteCurrentFolder called.'); // DEBUG: Log confirmation
+  async confirmDeleteCurrentFolder() { // Método para confirmar la eliminación de la carpeta
+    console.log('DEBUG: [CarpetaPage] confirmDeleteCurrentFolder llamado.'); // DEBUG: Log de confirmación
     if (!this.carpetaId) {
-        console.error('DEBUG: [CarpetaPage] Cannot delete, folderId is null.');
-        return;
+      console.error('DEBUG: [CarpetaPage] No se puede eliminar, carpetaId es nulo.');
+      return;
     }
 
     const alert = await this.alertCtrl.create({
-      header: 'Confirm Deletion',
-      // User requested specific warning message
-      message: `Are you sure you want to delete the folder "${this.nombreCarpeta}"? All its content (notes, etc.) will be permanently deleted and cannot be recovered.`,
-      cssClass: 'custom-alert-destructive', // Optional: for custom styling of destructive alerts
+      header: 'Confirmar Eliminación',
+      // Mensaje de advertencia específico solicitado por el usuario
+      message: `¿Estás seguro de que deseas eliminar la carpeta "${this.nombreCarpeta}"? Todo su contenido (notas, etc.) se eliminará permanentemente y no se podrá recuperar.`,
+      cssClass: 'custom-alert-destructive', // Opcional: para estilos personalizados de alertas destructivas
       buttons: [
-        { text: 'Cancel', role: 'cancel', cssClass: 'alert-button-cancel' },
+        { text: 'Cancelar', role: 'cancel', cssClass: 'alert-button-cancel' },
         {
-          text: 'Delete',
-          role: 'destructive', // Standard Ionic role for destructive actions
-          cssClass: 'alert-button-destructive', // Custom class for styling
+          text: 'Eliminar',
+          role: 'destructive', // Rol estándar de Ionic para acciones destructivas
+          cssClass: 'alert-button-destructive', // Clase personalizada para estilos
           handler: async () => {
-            console.log(`DEBUG: [CarpetaPage] Deletion confirmed for folderId ${this.carpetaId}`); // DEBUG: Log deletion confirmed
-            const loading = await this.mostrarLoading('Deleting folder and its contents...');
+            console.log(`DEBUG: [CarpetaPage] Eliminación confirmada para carpetaId ${this.carpetaId}`); // DEBUG: Log de eliminación confirmada
+            const loading = await this.mostrarLoading('Eliminando carpeta y su contenido...');
             this.carpetaService.deleteFolder(this.carpetaId!).pipe(
               finalize(() => loading.dismiss())
             ).subscribe({
               next: (response) => {
-                console.log('DEBUG: [CarpetaPage] deleteFolder successful response:', response); // DEBUG: Log success
-                this.presentToast('Folder and its contents deleted successfully.', 'success');
-                // After deletion, navigate the user away from this page, e.g., to the main folder list or dashboard
-                this.router.navigate(['/chat'], { replaceUrl: true }); // replaceUrl to prevent going back to the deleted folder page
+                console.log('DEBUG: [CarpetaPage] Respuesta exitosa de deleteFolder:', response); // DEBUG: Log de éxito
+                this.presentToast('Carpeta y su contenido eliminados exitosamente.', 'success');
+                // Después de la eliminación, navega al usuario lejos de esta página, por ejemplo, a la lista principal de carpetas o al panel de control
+                this.router.navigate(['/chat'], { replaceUrl: true }); // replaceUrl para evitar volver a la página de la carpeta eliminada
               },
               error: (error: HttpErrorResponse) => {
-                console.error('DEBUG: [CarpetaPage] deleteFolder error:', error); // DEBUG: Log error
-                const errorMessage = (error.error && error.error.error) ? error.error.error : 'Failed to delete folder. Please try again.';
+                console.error('DEBUG: [CarpetaPage] Error en deleteFolder:', error); // DEBUG: Log del error
+                const errorMessage = (error.error && error.error.error) ? error.error.error : 'No se pudo eliminar la carpeta. Por favor, inténtalo de nuevo.';
                 this.presentToast(errorMessage, 'danger');
               }
             });
@@ -660,76 +677,76 @@ export class CarpetaPage implements OnInit, OnDestroy {
   }
 
 
-   async promptMoveNota(nota: Nota) { // Method to prompt user to select a new folder for the note
-    console.log(`DEBUG: [CarpetaPage] promptMoveNota called for noteId: ${nota.nota_id}`); // DEBUG: Log call
+  async promptMoveNota(nota: Nota) { // Método para solicitar al usuario que seleccione una nueva carpeta para la nota
+    console.log(`DEBUG: [CarpetaPage] promptMoveNota llamado para notaId: ${nota.nota_id}`); // DEBUG: Log de la llamada
 
     if (!this.currentUserUid) {
-        this.presentToast('Authentication error. Cannot move note.', 'danger');
-        return;
+      this.presentToast('Error de autenticación. No se puede mover la nota.', 'danger');
+      return;
     }
 
-    const loading = await this.mostrarLoading('Loading folders...');
+    const loading = await this.mostrarLoading('Cargando carpetas...');
     this.carpetaService.listPersonalFolders().pipe(
-        finalize(() => loading.dismiss())
+      finalize(() => loading.dismiss())
     ).subscribe({
-        next: async (todasLasCarpetas) => {
-            // Filter out the current folder and the "General" folder if we don't want to move notes *to* "General" explicitly this way
-            // For now, we allow moving to any other folder, including "General" if it's not the current one.
-            const carpetasDisponibles = todasLasCarpetas.filter(c => c.carpeta_id !== this.carpetaId);
+      next: async (todasLasCarpetas) => {
+        // Filtra la carpeta actual y la carpeta "General" si no queremos mover notas *a* "General" explícitamente de esta manera
+        // Por ahora, permitimos mover a cualquier otra carpeta, incluida "General" si no es la actual.
+        const carpetasDisponibles = todasLasCarpetas.filter(c => c.carpeta_id !== this.carpetaId);
 
-            if (carpetasDisponibles.length === 0) {
-                this.presentToast('No other folders available to move this note to.', 'primary');
-                return;
+        if (carpetasDisponibles.length === 0) {
+          this.presentToast('No hay otras carpetas disponibles para mover esta nota.', 'primary');
+          return;
+        }
+
+        console.log('DEBUG: [CarpetaPage] Carpetas disponibles para mover la nota:', carpetasDisponibles); // DEBUG: Log de carpetas disponibles
+
+        const alertInputs = carpetasDisponibles.map(carpeta => ({
+          type: 'radio' as 'radio', // Tipo explícito 'radio'
+          label: carpeta.nombre,
+          value: carpeta.carpeta_id.toString(), // El valor debe ser una cadena para el controlador de alertas de radio
+          // checked: false // Opcional: preseleccionar uno
+        }));
+
+        const alert = await this.alertCtrl.create({
+          header: 'Mover Nota A...',
+          inputs: alertInputs,
+          buttons: [
+            { text: 'Cancelar', role: 'cancel' },
+            {
+              text: 'Mover',
+              handler: async (selectedFolderIdStr) => {
+                if (!selectedFolderIdStr) {
+                  this.presentToast('No se seleccionó ninguna carpeta.', 'warning');
+                  return; // O return false si el handler espera un booleano
+                }
+                const selectedFolderId = parseInt(selectedFolderIdStr, 10);
+                console.log(`DEBUG: [CarpetaPage] Intentando mover la nota ${nota.nota_id} a la carpeta ${selectedFolderId}`); // DEBUG: Log del intento de mover
+
+                const moveLoading = await this.mostrarLoading('Moviendo nota...');
+                this.notaService.moveNoteToFolder(nota.nota_id, selectedFolderId).pipe(
+                  finalize(() => moveLoading.dismiss())
+                ).subscribe({
+                  next: (response) => {
+                    console.log('DEBUG: [CarpetaPage] Respuesta exitosa de moveNoteToFolder:', response); // DEBUG: Log de éxito
+                    this.presentToast(`Nota movida exitosamente a la carpeta seleccionada.`, 'success');
+                    // Eliminar la nota de la vista actual y actualizar
+                    this.notas = this.notas.filter(n => n.nota_id !== nota.nota_id);
+                    this.cdr.detectChanges(); // Actualizar la vista
+                    // Opcional: Si quieres recargar todas las notas de la carpeta actual:
+                    // this.cargarNotas(false);
+                  },
+                  error: (error: HttpErrorResponse) => {
+                    console.error('DEBUG: [CarpetaPage] Error en moveNoteToFolder:', error); // DEBUG: Log del error
+                    const errorMessage = (error.error && error.error.error) ? error.error.error : 'Failed to move note. Please try again.';
+                    this.presentToast(errorMessage, 'danger');
+                  }
+                });
+              }
             }
-
-            console.log('DEBUG: [CarpetaPage] Available folders for moving note:', carpetasDisponibles); // DEBUG: Log available folders
-
-            const alertInputs = carpetasDisponibles.map(carpeta => ({
-                type: 'radio' as 'radio', // Explicitly type 'radio'
-                label: carpeta.nombre,
-                value: carpeta.carpeta_id.toString(), // Value must be a string for alert controller radio
-                // checked: false // Optional: pre-select one
-            }));
-
-            const alert = await this.alertCtrl.create({
-                header: 'Move Note To...',
-                inputs: alertInputs,
-                buttons: [
-                    { text: 'Cancel', role: 'cancel' },
-                    {
-                        text: 'Move',
-                        handler: async (selectedFolderIdStr) => {
-                            if (!selectedFolderIdStr) {
-                                this.presentToast('No folder selected.', 'warning');
-                                return; // Or return false if inside handler expects boolean
-                            }
-                            const selectedFolderId = parseInt(selectedFolderIdStr, 10);
-                            console.log(`DEBUG: [CarpetaPage] Attempting to move note ${nota.nota_id} to folder ${selectedFolderId}`); // DEBUG: Log move attempt
-
-                            const moveLoading = await this.mostrarLoading('Moving note...');
-                            this.notaService.moveNoteToFolder(nota.nota_id, selectedFolderId).pipe(
-                                finalize(() => moveLoading.dismiss())
-                            ).subscribe({
-                                next: (response) => {
-                                    console.log('DEBUG: [CarpetaPage] moveNoteToFolder successful response:', response); // DEBUG: Log success
-                                    this.presentToast(`Note moved successfully to selected folder.`, 'success');
-                                    // Remove the note from the current view and refresh
-                                    this.notas = this.notas.filter(n => n.nota_id !== nota.nota_id);
-                                    this.cdr.detectChanges(); // Update the view
-                                    // Optional: If you want to reload all notes for the current folder:
-                                    // this.cargarNotas(false); 
-                                },
-                                error: (error: HttpErrorResponse) => {
-                                    console.error('DEBUG: [CarpetaPage] moveNoteToFolder error:', error); // DEBUG: Log error
-                                    const errorMessage = (error.error && error.error.error) ? error.error.error : 'Failed to move note.';
-                                    this.presentToast(errorMessage, 'danger');
-                                }
-                            });
-                        }
-                    }
-                ]
-            });
-            await alert.present();
+          ]
+        });
+        await alert.present();
         },
         error: (error) => {
             console.error('DEBUG: [CarpetaPage] Error loading folders for move operation:', error); // DEBUG: Log folder list error

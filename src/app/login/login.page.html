@@ -1,6 +1,6 @@
 <ion-header>
   <ion-toolbar>
-    <img class="logo-img" src="assets/images/logo.png" alt="ChatBook Logo" />
+    <img class="logo-img" src="assets/images/Quaderna.png" alt="Quaderna" />
   </ion-toolbar>
 </ion-header>
 
@@ -15,7 +15,7 @@
 
     <!-- Contenedor de conexión -->
     <div *ngIf="isConnecting" class="connection-status">
-      <img src="assets/images/logo.png" alt="Conexión" />
+      <img src="" alt="Conexión" />
       <p>{{ isGuest ? '...' : '...' }}</p>
     </div>
 
@@ -46,8 +46,8 @@
           </ion-item>
 
           <!-- Botón de login -->
-          <ion-button expand="block" (click)="login()">Entrar</ion-button>
-          <ion-button expand="block" fill="clear" (click)="guestLogin()">Entrar como invitado</ion-button>
+           <ion-button expand="block" (click)="login()">Entrar</ion-button>
+          <!-- <ion-button expand="block" fill="clear" (click)="guestLogin()">Entrar como invitado</ion-button>  -->
 
           <!-- Contenedor de las opciones adicionales -->
           <ion-grid>
@@ -71,7 +71,7 @@
 
 <ion-footer>
   <ion-toolbar class="ion-text-center ion-margin-top">
-    <ion-title>© 2024 ChatBook</ion-title>
+    <ion-title>© 2025 Quaderna</ion-title>
     <p>Todos los derechos reservados.</p>
   </ion-toolbar>
 </ion-footer>

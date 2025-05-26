@@ -1,18 +1,17 @@
 // src/app/app.component.ts
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Platform, ToastController, ModalController, MenuController } from '@ionic/angular'; // Asegúrate que ModalController y MenuController estén aquí
+import { Platform, ToastController, ModalController, MenuController } from '@ionic/angular'; 
 import { Router } from '@angular/router';
 import { AuthService } from './services/auth.service';
 import { Subscription } from 'rxjs';
-// import { CarpetaService } from './services/carpeta.service'; // No es necesario aquí si solo abres el modal
+// import { CarpetaService } from './services/carpeta.service'; // No es necesario importarlo si solo abres el modal
 import { CarpetaCreatePage } from './carpeta-create/carpeta-create.page'; // Importa la página del modal
-import { CarpetaService, Carpeta } from './services/carpeta.service'; // Importar CarpetaService y la interfaz Carpeta
-
+import { CarpetaService, Carpeta } from './services/carpeta.service'; 
 
 @Component({
   selector: 'app-root',
   templateUrl: 'app.component.html',
-  // styleUrls: ['app.component.scss'], // Si tienes estilos específicos para app.component
+  // styleUrls: ['app.component.scss'], // No es necesario
 })
 export class AppComponent implements OnInit, OnDestroy {
   public isLoggedIn: boolean = false; // Hacerla pública para que la plantilla la pueda usar
@@ -24,7 +23,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private platform: Platform,
     private router: Router,
     private authService: AuthService,
-    private toastController: ToastController, // Mantener si lo usas directamente aquí
+    private toastController: ToastController, 
     private menuCtrl: MenuController,
     private modalCtrl: ModalController,
     private carpetaService: CarpetaService // Inyectar CarpetaService
@@ -33,18 +32,40 @@ export class AppComponent implements OnInit, OnDestroy {
     this.initializeApp();
   }
 
- 
+  
   ngOnInit() {
     console.log('[AppComponent] ngOnInit.');
+    // Marcamos el callback del subscribe como async para poder usar await dentro.
     this.authSubscription = this.authService.isLoggedIn$.subscribe(
-      (loggedInStatus) => {
+      async (loggedInStatus) => { 
         this.isLoggedIn = loggedInStatus;
         console.log('[AppComponent] Estado isLoggedIn actualizado:', this.isLoggedIn);
+
+        // *** CAMBIO CLAVE AQUÍ: Solo cargar carpetas si el usuario está logueado
+        // *** Y la URL actual NO es la página de login o registro.
+        // *** Esto evita llamadas a la API sin autenticar cuando la app se carga por primera vez
+        // *** y aterriza en /login o /register.
+        const currentUrl = this.router.url;
+        const isLoginPage = currentUrl.includes('/login');
+        const isRegisterPage = currentUrl.includes('/register');
+
         if (this.isLoggedIn) {
-          this.cargarCarpetasPersonales(); // Cargar carpetas cuando el usuario inicia sesión
+          // Si el usuario está logueado, carga las carpetas.
+          // Solo si NO estamos en la página de login/registro (que es donde se mostraría el error si falla)
+          if (!isLoginPage && !isRegisterPage) {
+            await this.cargarCarpetasPersonales(); // Cargar carpetas cuando el usuario inicia sesión
+          } else {
+            // Si el usuario está logueado pero estamos en login/registro, no hacer la carga.
+            // Esto puede pasar si el usuario ya tiene sesión pero vuelve a la URL de login.
+            console.log('[AppComponent] Usuario logueado pero en página de login/registro, no se cargan carpetas por ahora.');
+          }
         } else {
           this.carpetas = []; // Limpiar carpetas si el usuario cierra sesión
           console.log('[AppComponent] Usuario cerró sesión, lista de carpetas limpiada.');
+          // Si el usuario no está logueado y NO estamos ya en login/registro, redirigir
+          if (!isLoginPage && !isRegisterPage) {
+              await this.router.navigate(['/login'], { replaceUrl: true });
+          }
         }
       },
       (error) => console.error('[AppComponent] Error en isLoggedIn$ subscription:', error)
@@ -54,10 +75,13 @@ export class AppComponent implements OnInit, OnDestroy {
   initializeApp() {
     this.platform.ready().then(() => {
       console.log('[AppComponent] initializeApp: Plataforma lista.');
+      // Opcional: Aquí podrías llamar a un método en AuthService
+      // para que verifique el estado de autenticación inicial de forma proactiva.
+      // Por ejemplo: this.authService.checkInitialAuthStatus();
     });
   }
 
-   async cargarCarpetasPersonales() {
+    async cargarCarpetasPersonales() {
     if (!this.isLoggedIn) {
       console.log('[AppComponent] cargarCarpetasPersonales: Usuario no logueado, no se cargan carpetas.');
       return;
@@ -73,7 +97,21 @@ export class AppComponent implements OnInit, OnDestroy {
       error: (error) => {
         this.isLoadingCarpetas = false;
         console.error('[AppComponent] Error al cargar carpetas personales:', error);
-        this.showCustomToast('Error al cargar tus carpetas.', 'danger');
+        
+        // *** CAMBIO CLAVE AQUÍ: Solo mostrar el toast de error si no estamos en la página de login o registro.
+        // *** Si estamos en login, el error de carga de carpetas es esperado antes de autenticarse
+        // *** y no debe mostrar un toast que confunda al usuario.
+        const currentUrl = this.router.url;
+        const isLoginPage = currentUrl.includes('/login');
+        const isRegisterPage = currentUrl.includes('/register');
+
+        if (!isLoginPage && !isRegisterPage) {
+          this.showCustomToast('Error al cargar tus carpetas.', 'danger');
+        } else {
+             // Si estamos en login/registro, el error de carga de carpetas puede ser normal
+             // (ej. se intentó acceder a una ruta protegida sin autenticar)
+             console.log('[AppComponent] Error de carga de carpetas ignorado en página de login/registro para evitar toast redundante.');
+        }
         this.carpetas = []; // Asegurar que esté vacía en caso de error
       }
     });
@@ -96,7 +134,7 @@ export class AppComponent implements OnInit, OnDestroy {
       if (result.role === 'confirm' && result.data && result.data.created) {
         console.log('[AppComponent] Carpeta creada (modal):', result.data.folderName);
         this.showCustomToast(`Carpeta "${result.data.folderName}" creada.`, 'success');
-        this.cargarCarpetasPersonales(); // <-- RECARGAR CARPETAS DESPUÉS DE CREAR UNA NUEVA
+        this.cargarCarpetasPersonales(); 
       }
     });
     return await modal.present();
@@ -144,12 +182,10 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
- async abrirCarpeta(carpeta: Carpeta) {
+  async abrirCarpeta(carpeta: Carpeta) {
     await this.closeCurrentMenu();
     console.log(`[AppComponent] Navegando a carpeta: ${carpeta.nombre} (ID: ${carpeta.carpeta_id})`);
     // Navegar a la nueva ruta, pasando el carpeta_id como parámetro
     this.router.navigate(['/carpeta', carpeta.carpeta_id]);
   }
-
-
 }

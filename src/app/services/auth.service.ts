@@ -95,7 +95,7 @@ export class AuthService {
   }
 
   // Método para obtener el usuario actual
-  getCurrentUser(): User | null {
+  async getCurrentUser(): Promise<User | null> {
     return this.auth.currentUser; // Devuelve el usuario actual autenticado
   }
 
@@ -147,3 +147,4 @@ export class AuthService {
     return this.isLoggedInSubject.getValue();
   }
 }
+

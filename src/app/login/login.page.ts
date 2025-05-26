@@ -69,6 +69,7 @@ export class LoginPage implements OnInit {
     this.animationState = 'active'; // Comienza la animación
     const loading = await this.loadingController.create({
       message: 'Cargando...',
+      
     });
 
     await loading.present(); // Muestra el spinner de carga
@@ -105,7 +106,7 @@ export class LoginPage implements OnInit {
     this.isConnecting = true;
     const loading = await this.loadingController.create({
       message: 'Cargando...',
-      duration: 1000
+      duration: 1000,
     });
 
     await loading.present();
