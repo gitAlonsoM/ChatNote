@@ -1,3 +1,4 @@
+//src\app\chat\chat-routing.module.ts
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 
@@ -7,7 +8,8 @@ const routes: Routes = [
   {
     path: '',
     component: ChatPage
-  },  {
+  },
+  {
     path: 'custom-instruction',
     loadChildren: () => import('./custom-instruction/custom-instruction.module').then( m => m.CustomInstructionPageModule)
   }
