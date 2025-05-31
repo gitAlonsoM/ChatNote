@@ -1,9 +1,10 @@
+//src\app\guards\auth.guard.spec.ts
+
 import { TestBed } from '@angular/core/testing';
 import { AuthService } from '../services/auth.service';
 import { AuthGuard } from './auth.guard';
 import { of } from 'rxjs';
 import { Router } from '@angular/router';
-import { User } from 'firebase/auth';
 
 describe('AuthGuard', () => {
   let authService: jasmine.SpyObj<AuthService>;

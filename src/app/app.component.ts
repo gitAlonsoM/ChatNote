@@ -60,39 +60,53 @@ export class AppComponent implements OnInit, OnDestroy {
           this.routerEventsSubscription = this.router.events.pipe(
             filter((event: RouterEvent): event is NavigationEnd => event instanceof NavigationEnd), // Filtrar y asegurar el tipo
             takeUntil(this.ngUnsubscribe)
+
           ).subscribe(async (navEndEvent: NavigationEnd) => { // Ahora navEndEvent es correctamente tipado como NavigationEnd
-            console.log(`DEBUG: [AppComponent] NavigationEnd event. New URL: ${navEndEvent.urlAfterRedirects}`);
+            console.log(`DEBUG: [AppComponent] NavigationEnd event. New URL: ${navEndEvent.urlAfterRedirects}. User is loggedIn: ${this.isLoggedIn}`); // Añadido isLoggedIn aquí para confirmar
             const currentUrl = navEndEvent.urlAfterRedirects;
             const isLoginPage = currentUrl.includes('/login');
             const isRegisterPage = currentUrl.includes('/register');
 
             console.log(`DEBUG: [AppComponent] RouterEvent: currentUrl: ${currentUrl}, isLoginPage: ${isLoginPage}, isRegisterPage: ${isRegisterPage}`);
 
-            if (!isLoginPage && !isRegisterPage) {
-              console.log('DEBUG: [AppComponent] RouterEvent: Conditions met (logged in and not on login/register). Calling cargarCarpetasPersonales().');
+            // Asegurarse de que realmente estamos logueados ANTES de cargar carpetas basado en NavigationEnd
+            if (this.isLoggedIn && !isLoginPage && !isRegisterPage) {
+              console.log('DEBUG: [AppComponent] RouterEvent: Conditions met (loggedIn, not on login/register). Calling cargarCarpetasPersonales().');
               await this.cargarCarpetasPersonales();
             } else {
-              console.log('DEBUG: [AppComponent] RouterEvent: Logged in but on login/register page. Not loading folders based on this navigation event.');
+              console.log(`DEBUG: [AppComponent] RouterEvent: Conditions NOT met for folder load. isLoggedIn: ${this.isLoggedIn}, onLogin: ${isLoginPage}, onRegister: ${isRegisterPage}`);
             }
           });
 
           // Intento de carga inicial si ya estamos en una ruta válida y el estado de login acaba de cambiar a true
+          // Esta lógica es principalmente para el menú cuando la app se carga/refresca con un usuario ya logueado.
+          // No necesariamente restaura la vista principal a la ruta profunda por sí misma.
           const initialUrl = this.router.url; // URL en el momento de la emisión de isLoggedIn$
           if (previousIsLoggedIn === false && loggedInStatus === true && !initialUrl.includes('/login') && !initialUrl.includes('/register')) {
-            console.log('DEBUG: [AppComponent] isLoggedIn$ changed to true and initial URL is valid. Attempting immediate folder load.');
+            console.log(`DEBUG: [AppComponent] isLoggedIn$ changed to true and initial URL (${initialUrl}) is valid. Attempting immediate folder load for menu.`);
+
             await this.cargarCarpetasPersonales();
           }
 
         } else {
-          this.carpetas = [];
+           this.carpetas = [];
           this.isLoadingCarpetas = false;
-          console.log('[AppComponent] Usuario cerró sesión, lista de carpetas limpiada.');
+          console.log('[AppComponent] Usuario cerró sesión o estado inicial es no logueado.');
           console.log('DEBUG: [AppComponent] User is NOT logged in.');
           this.cdr.detectChanges();
 
           const currentUrl = this.router.url;
-          if (!currentUrl.includes('/login') && !currentUrl.includes('/register')) {
+          // SOLO redirigir a /login si:
+          // 1. El usuario NO está logueado.
+          // 2. NO estamos ya en /login o /register.
+          // 3. NO estamos en la ruta raíz '/' (porque app-routing la redirigirá a /login de todas formas,
+          //    y queremos darle a AuthService la oportunidad de emitir `true` si hay sesión persistente).
+          //    Si después de que AuthService confirme que no hay sesión, y seguimos en '/', la redirección de app-routing actuará.
+          if (currentUrl !== '/' && !currentUrl.includes('/login') && !currentUrl.includes('/register')) {
+            console.log(`DEBUG: [AppComponent] Not logged in and not on root/login/register. Current URL: ${currentUrl}. Redirecting to /login.`);
             await this.router.navigate(['/login'], { replaceUrl: true });
+          } else {
+            console.log(`DEBUG: [AppComponent] Not logged in, but on root, login, or register page. No explicit redirection needed from AppComponent. Current URL: ${currentUrl}`);
           }
         }
       },

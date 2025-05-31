@@ -1,7 +1,7 @@
 // src/app/services/auth.service.ts
 import { Injectable } from '@angular/core';
 import {Auth,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendPasswordResetEmail, signOut, User, UserCredential} from '@angular/fire/auth';
-import { BehaviorSubject } from 'rxjs'; // Importar BehaviorSubject
+import { BehaviorSubject, ReplaySubject } from 'rxjs';
 import { Router } from '@angular/router';
 import { ToastController } from '@ionic/angular';
 import { HttpClient } from '@angular/common/http';
@@ -12,11 +12,17 @@ import { inject } from '@angular/core';
 })
 export class AuthService {
 
-  // BehaviorSubject para el estado de inicio de sesión
   private isLoggedInSubject = new BehaviorSubject<boolean>(false); // Inicializa en false
   isLoggedIn$ = this.isLoggedInSubject.asObservable(); // Observable para que otros componentes puedan suscribirse
 
-  // Se asegura de que Auth se inyecte correctamente
+  private currentUserSubject = new BehaviorSubject<User | null>(null); // Mantener para currentUser si se usa
+  public currentUser$ = this.currentUserSubject.asObservable();
+
+  private authStateChecked = new ReplaySubject<void>(1);
+  public authStateChecked$ = this.authStateChecked.asObservable(); // Observable para que el guard lo use
+  private initialCheckDone: boolean = false; // Flag para asegurar que authStateChecked.next() solo se llame una vez
+
+
   private auth: Auth = inject(Auth);
 
   constructor(
@@ -24,14 +30,26 @@ export class AuthService {
     private toastController: ToastController,
     private http: HttpClient
   ) {
-    // Se dispara cada vez que Firebase detecta cambio de auth-state
+
+      // Se dispara cada vez que Firebase detecta cambio de auth-state
     this.auth.onAuthStateChanged(user => {
-      this.isLoggedInSubject.next(!!user);
+      console.log('DEBUG: [AuthService] onAuthStateChanged. User:', user ? user.uid : 'null'); // DEBUG
+      this.currentUserSubject.next(user); // Actualizar currentUser
+      this.isLoggedInSubject.next(!!user); // Actualizar estado de login
+
+      // Indicar que la comprobación inicial del estado de autenticación ha terminado, solo la primera vez
+      if (!this.initialCheckDone) {
+        console.log('DEBUG: [AuthService] Initial auth state checked.'); // DEBUG
+        this.authStateChecked.next(); // Emitir una vez que onAuthStateChanged se haya ejecutado por primera vez
+        this.authStateChecked.complete(); // Completar el ReplaySubject, ya no necesitamos más emisiones de él
+        this.initialCheckDone = true;
+      }
     });
   }
-  
+
   // Método para registrar un nuevo usuario
   async register(email: string, password: string, name: string): Promise<UserCredential> {
+
     try {
       const userCredential = await createUserWithEmailAndPassword(this.auth, email, password);
       console.log('Registro exitoso:', userCredential);
@@ -70,9 +88,15 @@ export class AuthService {
 
       // NEW: asegura creación/validación del usuario en Oracle
       const { uid, email: e } = userCredential.user;
-      this.sendToDjango(uid, e ?? '', 'Provisorio');                      // <-- aquí
+      
+      
+// El nombre 'Provisorio' solo debe enviarse si 'name' no está disponible o es un nuevo login sin ese dato
+      // Esto podría ser mejorado para tomar el nombre del perfil de Firebase si existe
+      this.sendToDjango(uid, e ?? '', 'Usuario Logueado'); // Ajustado el nombre enviado
 
       if (rememberMe) {
+        // Considerar usar localStorage para persistencia más allá de la sesión si "rememberMe" es verdadero.
+        // Firebase maneja su propia persistencia, sessionStorage aquí es para tu lógica de app.
         sessionStorage.setItem('user', JSON.stringify(userCredential.user));
       }
       return userCredential.user;
@@ -112,13 +136,15 @@ export class AuthService {
       try {
         await signOut(this.auth);
         console.log('Usuario desconectado');
-        this.isLoggedInSubject.next(false); // Actualiza el estado a 'false' al desconectarse
 
-        // Limpiar el usuario de sessionStorage
-        sessionStorage.removeItem('user');
+        sessionStorage.removeItem('user'); // Esto está bien
 
         // Mostrar toast de desconexión exitosa
         this.showToast('Te has desconectado de forma exitosa. Vuelve pronto.');
+        // Navegar al login DESPUÉS de que el estado se haya actualizado y el toast se muestre
+        // Es mejor que la navegación la maneje el guard o AppComponent basado en isLoggedIn$
+        // pero si quieres forzarla aquí, asegúrate que sea lo último.
+        this.router.navigate(['/login'], { replaceUrl: true }); // Añadir redirección aquí si es necesario
 
       } catch (error) {
         console.error('Error al desconectarse:', error);
