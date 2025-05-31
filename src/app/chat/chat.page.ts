@@ -3,15 +3,11 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { ChatService } from './chat.service';
 import { AuthService } from '../services/auth.service';
-import { ToastController, Platform } from '@ionic/angular'; //Platform se usa para verificar si la app esta ejecutada en un entorno nativo
-import { Subscription } from 'rxjs'; // Importa Subscription para manejar observables
-import { ChatStorageService, ChatMessage } from './chat-storage.service'; //NEW CHAT STORE
-import { GeolocationService } from '../services/geolocation.service'; //Se importa el servicio
+import { ToastController, Platform } from '@ionic/angular'; 
+import { Subscription } from 'rxjs'; 
+import { GeolocationService } from '../services/geolocation.service'; 
 import { ViewChild, ElementRef } from '@angular/core';
 
-
-
-//Decorador para declarar que es un Componente de Angular (pagina visual, interactuar con html, escuchar eventos de usuario, (UI),etc)
 @Component({
   selector: 'app-chat',
   templateUrl: './chat.page.html',
@@ -23,28 +19,25 @@ export class ChatPage implements OnInit, OnDestroy {
 
    @ViewChild('chatMessages', { static: false }) chatMessages!: ElementRef;
 
-  //Propiedades de la clase
   userMessage: string = '';
   isLoggedIn: boolean = false;
-  logoutButtonHidden: boolean = false;
-  message: string = ''; // Mensaje emergente que se mostrara
-  showMessage: boolean = false; //controlar la visibilidad de mensajes emergentes
-  private authSubscription: Subscription | null = null; // Inicializado a null
+  message: string = ''; 
+  showMessage: boolean = false; 
+  private authSubscription: Subscription | null = null; 
 
+  messages: { role: string, content: string }[] = [{ 
+    role: 'assistant',
+    content: 'Hola, ¿En qué puedo ayudarte?'
+  }];
 
-  // Inicializar el array de mensajes con el mensaje del asistente. 
-  messages = [{ role: 'assistant',  //propiedad-valor
-                content: 'Hola, ¿En qué puedo ayudarte?' }];
-
-  constructor( //propiedades o dependencias inyectadas en la clase para ser usadas dentro de sus métodos. 
+  
+ constructor( 
     private router: Router,
     private chatService: ChatService,
     private authService: AuthService,
     private toastController: ToastController,
     private platform: Platform,
     private geolocationService: GeolocationService,
-    private chatStorageService: ChatStorageService  //NEW CHAT STORE
-
   ) {}
 
 
@@ -62,11 +55,9 @@ async sendLocation() {
     const { latitude, longitude } = await this.geolocationService.getCurrentPosition();
     const content = `Mis coordenadas son: ${latitude}, ${longitude}. ¿Puedes decirme en qué ciudad y país me encuentro?`;
 
-    // Mensaje de usuario y persistencia
-    this.messages.push({ role: 'user', content: 'Enviando ubicación...' });
-    this.chatStorageService.saveMessages(this.messages);
+     this.messages.push({ role: 'user', content: 'Enviando ubicación...' });
+    console.log('DEBUG: [ChatPage] sendLocation - User message added, not saving to storage.'); // DEBUG: Indica que no se guarda
 
-    // Envío al LLM
     this.chatService.sendMessageToLLM([{ role: 'user', content }]).subscribe(
       res => {
         // INSERT
@@ -83,15 +74,18 @@ async sendLocation() {
         // Conversación normal
         } else {
           const data = this.platform.is('hybrid') ? res.data : res;
-          const reply = data.choices?.[0]?.message.content 
+          const reply = data.choices?.[0]?.message.content
                         || 'No pude procesar tu respuesta.';
           this.messages.push({ role: 'assistant', content: reply });
         }
 
         // Guardar y scrollear
-        this.chatStorageService.saveMessages(this.messages);
+        // this.chatStorageService.saveMessages(this.messages); // SE ELIMINA el guardado de mensajes
+        console.log('DEBUG: [ChatPage] sendLocation - LLM response added, not saving to storage.'); // DEBUG: Indica que no se guarda
         this.scrollToBottom();
       },
+
+
       err => {
         this.messages.push({ role: 'assistant', content: 'Error comunicándose con el LLM.' });
         this.scrollToBottom();
@@ -107,18 +101,17 @@ async sendLocation() {
 }
 
 
+ngOnInit() {
 
+    console.log('DEBUG: [ChatPage] ngOnInit - Chat initialized without loading from storage.'); // DEBUG: Indica que no se carga desde storage
 
-  ngOnInit() {
-     //NEW CHAT STORE
-    this.chatStorageService.loadMessages().then((savedMessages: ChatMessage[]) => {
-      if (savedMessages.length > 0) {
-        this.messages = savedMessages;
-      }
-    });
     this.authSubscription = this.authService.isLoggedIn$.subscribe(
       (isLoggedIn) => {
         this.isLoggedIn = isLoggedIn;
+        if (this.messages.length > 1 || (this.messages.length === 1 && this.messages[0].content !== 'Hola, ¿En qué puedo ayudarte?')) {
+            console.log('DEBUG: [ChatPage] isLoggedIn$ or page focus changed, resetting chat to default.');
+            this.clearChatInternal(); // Llama a un método interno para resetear solo en memoria
+        }
         if (isLoggedIn) {
           this.showConnectionMessage('Te has conectado.', true);
         } else {
@@ -126,7 +119,9 @@ async sendLocation() {
         }
       }
     );
+    this.scrollToBottom(); 
   }
+
 
   ngOnDestroy() {
     if (this.authSubscription) {
@@ -134,39 +129,39 @@ async sendLocation() {
     }
   }
 
-  // Enviar el mensaje al bot y obtener su respuesta
   sendMessage() {
     if (this.userMessage.trim().length > 0) {
       this.messages.push({ role: 'user', content: this.userMessage });
-      this.chatStorageService.saveMessages(this.messages);
+
+      console.log('DEBUG: [ChatPage] sendMessage - User message added, not saving to storage.'); // DEBUG: Indica que no se guarda
       this.scrollToBottom();
-  
+
       this.chatService.sendMessageToLLM(this.messages).subscribe(
        (response: any) => {
               console.log('DEBUG: response in sendMessage', response);
+
+
               if (response.action === 'INSERT') {
                 console.log('DEBUG: INSERT action received', response);
                 const confirmation = `✅ Note added successfully: "${response.contenido}"`;  // use 'contenido'
                 this.messages.push({ role: 'assistant', content: confirmation });
-                this.chatStorageService.saveMessages(this.messages);
                 this.scrollToBottom();
+
+
                 this.userMessage = '';
                 return;
               }
   
               let botReplyContent: string = '';
   
-          // Si la respuesta contiene tareas, formatearlas y actualizamos el system prompt
           if (response.notes) {
             botReplyContent = response.notes
               .map((n: any) => `${n.nota_id}. ${n.contenido}`)  // format "ID. content"
               .join('\n');
             this.messages.push({ role: 'assistant', content: botReplyContent });
-            this.chatStorageService.saveMessages(this.messages);
             this.scrollToBottom();
             return;
           }
-          // ====
            else {
             if (this.platform.is('hybrid')) {
               const responseData = response.data;
@@ -186,7 +181,6 @@ async sendLocation() {
             }
           }
   
-          // Agregamos la respuesta (ya sea las tareas o la respuesta normal) al historial del chat
           this.messages.push({ role: 'assistant', content: botReplyContent });
           this.scrollToBottom();
         },
@@ -224,12 +218,19 @@ async sendLocation() {
     }, 3000);
   }
   
+ 
   clearChat(): void {
-    this.messages = [{ role: 'assistant', content: 'Hola, ¿En qué puedo ayudarte?' }];
-    this.chatStorageService.clearMessages();
+    this.clearChatInternal(); // Llama al nuevo método que solo afecta la memoria
+    console.log('DEBUG: [ChatPage] clearChat - User explicitly cleared chat (in-memory only).'); // DEBUG
   }
 
-
+  private clearChatInternal(): void {
+    this.messages = [{ role: 'assistant', content: 'Hola, ¿En qué puedo ayudarte?' }];
+    console.log('DEBUG: [ChatPage] clearChatInternal - Chat reset to default state (in-memory only).');
+    this.scrollToBottom(); 
+  }
 }
+
+
 
 
