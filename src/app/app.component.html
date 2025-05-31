@@ -64,10 +64,11 @@
         </div>
                  <!-- FIN SECCIÓN DE CARPETAS -->
 
-        <ion-item button routerLink="/login">
+      <!--   <ion-item button routerLink="/login">
           <ion-icon slot="start" name="log-in-outline"></ion-icon>
           <ion-label>Login</ion-label> 
-        </ion-item>
+        </ion-item> -->
+
         <ion-item button (click)="logout()" *ngIf="isLoggedIn">
           <ion-icon slot="start" name="log-out-outline"></ion-icon>
           <ion-label>Desconectarse</ion-label>
@@ -178,6 +179,8 @@
     </ion-list>
   </ion-content>
 </ion-menu>
+
+
 
 
 

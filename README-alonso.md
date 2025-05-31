@@ -46,7 +46,7 @@ capacitor.config.ts
 
 URL: /capacitor.config.ts
 
-Define la appId (io.ionic.starter), appName (ChatBook) y el directorio web de compilación (www).
+Define la appId (io.ionic.starter), appName (Quaderna) y el directorio web de compilación (www).
 
 src/app/app.module.ts
 
@@ -555,3 +555,36 @@ Para una mejor UX, es ideal que los endpoints POST (crear) y PUT (actualizar) de
 ## ARCHIVOS CLAVES
 src\app\app.component.ts
 src\app\app.component.html
+
+## =================================================================
+UPDATE 31.05.2025
+
+Durante la sesión de desarrollo y depuración reciente, se implementaron varias mejoras y correcciones clave en la aplicación Ionic:
+
+1.  **Carga Inicial de Carpetas en el Menú Lateral:**
+    *   **Problema Solucionado:** Las carpetas personales del usuario no se mostraban en el menú lateral inmediatamente después de iniciar sesión; solo aparecían tras crear una nueva carpeta.
+    *   **Solución:** Se ajustó la lógica en `src/app/app.component.ts` para que, además de reaccionar a los cambios de estado de autenticación (`isLoggedIn$`), también se suscriba a los eventos de navegación del router (`NavigationEnd`). Esto asegura que `cargarCarpetasPersonales()` se llame cuando el usuario está logueado y navega a una ruta principal (ej. `/chat`), garantizando que las carpetas se muestren en el menú desde el inicio.
+    *   **Archivos Clave Modificados:** `src/app/app.component.ts`.
+
+2.  **Eliminación de Persistencia Local del Historial de Chat:**
+    *   **Requisito Implementado:** Se eliminó el guardado del historial de mensajes del chat en el almacenamiento local (`@ionic/storage-angular`).
+    *   **Comportamiento Actual:** El chat ahora comienza siempre con el mensaje por defecto "Hola, ¿En qué puedo ayudarte?". Los mensajes solo persisten durante la sesión activa en la vista del chat. Al cerrar sesión, cambiar de usuario o recargar la página de chat, el historial anterior no se carga.
+    *   **Archivos Clave Modificados:** Principalmente `src/app/chat/chat.page.ts` (se eliminaron las interacciones con `ChatStorageService` para guardar/cargar mensajes). `ChatStorageService` se mantiene pero sus métodos de guardado/carga de historial ya no se utilizan desde la página de chat.
+
+3.  **Mejora en la Persistencia de Sesión al Refrescar la Página (F5):**
+    *   **Problema Solucionado:** Al refrescar la página (F5) en rutas protegidas (ej. `/chat`, `/carpeta/ID`), el usuario era redirigido incorrectamente a la página de `/login` a pesar de tener una sesión de Firebase activa.
+    *   **Solución:**
+        *   Se introdujo un mecanismo en `src/app/services/auth.service.ts` para señalar explícitamente cuándo la comprobación inicial del estado de autenticación de Firebase (`onAuthStateChanged`) ha finalizado (usando un `ReplaySubject` llamado `authStateChecked$`).
+        *   Se modificó `src/app/guards/auth.guard.ts` para que espere la señal de `authStateChecked$` antes de evaluar `isLoggedIn$`. Esto asegura que el `AuthGuard` tome su decisión de permitir o denegar el acceso basándose en el estado de autenticación ya resuelto por Firebase, previniendo redirecciones prematuras.
+        *   La lógica en `src/app/app.component.ts` se mantuvo para la carga de datos del menú, pero el `AuthGuard` ahora maneja de forma más robusta la activación de rutas protegidas al recargar.
+    *   **Archivos Clave Modificados:** `src/app/services/auth.service.ts`, `src/app/guards/auth.guard.ts`.
+
+4.  **Corrección del "Cuelgue" en la Página de Login con Credenciales Inválidas:**
+    *   **Problema Solucionado:** Al ingresar credenciales incorrectas en la página de login, se mostraba un mensaje de error, pero la UI quedaba "cargando" (con el spinner `ion-loading` activo) impidiendo reintentos sin refrescar.
+    *   **Solución:** Se ajustó la lógica en el método `login()` y `handleError()` de `src/app/login/login.page.ts` para asegurar que el componente `ion-loading` se cierre (`dismiss()`) correctamente tanto en casos de éxito como de error. También se aseguró que los estados internos (`isConnecting`, `animationState`) se restablezcan adecuadamente.
+    *   **Archivos Clave Modificados:** `src/app/login/login.page.ts`.
+
+
+## =================================================================
+
+

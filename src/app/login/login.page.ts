@@ -22,13 +22,13 @@ import { trigger, state, style, transition, animate } from '@angular/animations'
 export class LoginPage implements OnInit {
   email: string = '';
   password: string = '';
-  rememberMe: boolean = false; // Nuevo campo para "Recordar cuenta"
-  loading: boolean = false; // Control del loading
-  animationState: string = 'inactive'; // Estado de la animación
-  showMessage: boolean = false; // Para mostrar la barra de mensaje de desconexión
-  message: string | null = null; // Para el mensaje de desconexión
-  isConnecting: boolean = false; // Para controlar el estado de conexión
-  isGuest: boolean = false; // Para verificar si el usuario es invitado (AGREGADO)
+  rememberMe: boolean = false; 
+  loading: boolean = false; 
+  animationState: string = 'inactive'; 
+  showMessage: boolean = false; 
+  message: string | null = null; 
+  isConnecting: boolean = false; 
+  isGuest: boolean = false; 
 
   constructor(
     private router: Router,
@@ -65,62 +65,40 @@ export class LoginPage implements OnInit {
       return;
     }
 
-    this.isConnecting = true;
-    this.animationState = 'active'; // Comienza la animación
+this.isConnecting = true;
+    this.animationState = 'active';
     const loading = await this.loadingController.create({
       message: 'Cargando...',
-      
     });
-
-    await loading.present(); // Muestra el spinner de carga
+    await loading.present();
 
     try {
       const user = await this.authService.login(this.email, this.password);
-      if (user) {
-        this.presentToast('Entrando como usuario autenticado...', 'success', '✅');
+   
 
-        // Si "Recordar cuenta" está marcado, guardar el usuario en localStorage
-        if (this.rememberMe) {
-          localStorage.setItem('user', JSON.stringify(user)); // Guardar los datos del usuario
-        }
-
-        // Esperar a que termine la navegación y después ocultar el spinner
-        this.router.navigate(['/chat']).then(() => {
-          loading.dismiss(); // Oculta el loading después de la navegación
-          this.animationState = 'inactive'; // Detiene la animación
-          this.isConnecting = false; // Cambia el estado de conexión
-        });
+      this.presentToast('Entrando como usuario autenticado...', 'success', '✅');
+      if (this.rememberMe) {
+        localStorage.setItem('user', JSON.stringify(user)); // user podría ser null si el servicio lo permite, mejor usar userCredential.user del servicio
       }
+
+      await this.router.navigate(['/chat']);
+      // Si la navegación fue exitosa y no hubo error antes:
+      this.animationState = 'inactive'; // Detener animación en éxito
+      this.isConnecting = false;       // Resetear estado en éxito
+      // loading.dismiss() se hará en finally
+
     } catch (error) {
-      this.handleError(error); // Manejo de errores en el login
+      // handleError se encarga de mostrar el toast y resetear this.isConnecting y this.animationState
+      this.handleError(error);
     } finally {
-      // Si no hay usuario y hubo algún error, se asegura de ocultar el spinner
-      if (this.isConnecting && loading) {
-        loading.dismiss();
+      console.log('DEBUG: [LoginPage] Login process finished, entering finally block.'); // DEBUG
+      if (loading) { // Asegurar que loading fue creado
+        await loading.dismiss();
+        console.log('DEBUG: [LoginPage] Loading dismissed in finally.'); // DEBUG
       }
     }
   }
 
-  // entrar como invitado a la aplicacion
-  async guestLogin() {
-    this.isConnecting = true;
-    const loading = await this.loadingController.create({
-      message: 'Cargando...',
-      duration: 1000,
-    });
-
-    await loading.present();
-
-    this.presentToast('...', 'primary', '👤');
-
-    // Usar un setTimeout para simular la conexión y luego navegar
-    setTimeout(() => {
-      this.router.navigate(['/chat']).then(() => {
-        loading.dismiss(); // Oculta el loading después de la navegación
-        this.isConnecting = false;
-      });
-    }, 1000);
-  }
 
   private async presentToast(message: string, color: string = 'dark', icon: string = '') {
     const toast = await this.toastController.create({
@@ -137,23 +115,28 @@ export class LoginPage implements OnInit {
     let errorMessage = '';
 
     switch (errorCode) {
-      case 'auth/user-not-found':
-        errorMessage = 'Error: Este usuario no está registrado. Por favor, crea una cuenta.';
+       case 'auth/user-not-found':
+      case 'auth/invalid-email': // Combinar casos si el mensaje es similar
+        errorMessage = 'Error: Usuario no encontrado o email inválido.';
         break;
       case 'auth/wrong-password':
-        errorMessage = 'Error: La contraseña es incorrecta. Por favor, intenta de nuevo.';
+      case 'auth/invalid-credential': // auth/invalid-credential es el que viste en los logs
+        errorMessage = 'Error: Credenciales incorrectas. Por favor, verifica tu email y contraseña.';
         break;
-      case 'auth/invalid-email':
-        errorMessage = 'Error: El correo electrónico ingresado no es válido.';
-        break;
+      // case 'auth/invalid-email': // Ya cubierto arriba
+      //   errorMessage = 'Error: El correo electrónico ingresado no es válido.';
+      //   break;
       default:
-        errorMessage = 'Error: No se pudo iniciar sesión. Asegúrate de que el correo y la contraseña sean correctos.';
+        errorMessage = 'Error: No se pudo iniciar sesión. Inténtalo de nuevo.';
+        console.error('DEBUG: [LoginPage] Unhandled login error code:', errorCode, error); // DEBUG: Para errores no manejados explícitamente
     }
 
-    console.error('Error en el inicio de sesión:', error);
+    console.error('Error en el inicio de sesión:', error); // Esto ya lo tenías
     this.presentToast(errorMessage, 'danger', '⚠️');
-    this.isConnecting = false;
+    this.isConnecting = false; // Asegurar que se resetea el estado de conexión
+    this.animationState = 'inactive'; // Asegurar que se resetea el estado de la animación
   }
+
 
   createAcc() {
     this.router.navigate(['/register']);

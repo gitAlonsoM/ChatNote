@@ -30,7 +30,6 @@ export class CarpetaPage implements OnInit, OnDestroy {
   archivoParaSubir: File | null = null;
   isUploadingFile: boolean = false;
   private routeSubscription: Subscription | undefined;
-  // currentUserUid ya no se inicializa aquí, se obtiene de forma asíncrona en ngOnInit
   private currentUserUid: string | null = null; // Se mantiene la propiedad para acceso posterior si es necesario
 
   constructor(
