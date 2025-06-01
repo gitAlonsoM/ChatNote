@@ -586,5 +586,10 @@ Durante la sesión de desarrollo y depuración reciente, se implementaron varias
 
 
 ## =================================================================
+UPDATE 01.06.2025
 
+>LA APLICACION A CAMBIADO SU NOMBRE, desde ChatNote a Quaderna.
+Aun muchos directorios siguen llamandose ChatNote, pero el nombre visible en la UI sera Quaderna y poco a poco se iran cambiando las referencias a ChatNote por el nuevo nombre Quaderna. 
+
+>
 
