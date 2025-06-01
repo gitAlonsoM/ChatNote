@@ -1,0 +1,35 @@
+<!-- src\app\modals\workspace-create\workspace-create.page.html -->
+<ion-header>
+  <ion-toolbar color="secondary"> <!-- Color diferente para distinguir -->
+    <ion-title>Crear Espacio Colaborativo</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismissModal()">Cerrar</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <ion-item>
+    <ion-label position="stacked">Nombre del Espacio</ion-label>
+    <ion-input
+      [(ngModel)]="workspaceName"
+      name="workspaceName"
+      placeholder="Ej: Proyecto Alpha"
+      type="text"
+      (ionInput)="onNameChange($event)"
+      debounce="300"
+      required
+    ></ion-input>
+  </ion-item>
+  <div *ngIf="errorMessage" class="error-message ion-padding-start">
+    {{ errorMessage }}
+  </div>
+</ion-content>
+<ion-footer>
+  <ion-toolbar>
+    <ion-button expand="full" (click)="createWorkspace()" [disabled]="!workspaceName.trim() || isLoading">
+      <ion-spinner *ngIf="isLoading" name="crescent" slot="start"></ion-spinner>
+      Crear Espacio
+    </ion-button>
+  </ion-toolbar>
+</ion-footer>

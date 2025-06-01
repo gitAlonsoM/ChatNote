@@ -51,11 +51,35 @@ const routes: Routes = [
       ),
   },
 
+    {
+    path: 'espacio/:id', // Ruta para la página de detalle del espacio colaborativo
+    loadChildren: () => import('./workspace-detail/workspace-detail.module').then( m => m.WorkspaceDetailPageModule),
+    canActivate: [AuthGuard] // Proteger también esta ruta
+  },
+
+
    {
     path: 'carpeta/:id', // :id será el carpeta_id
     loadChildren: () => import('./carpeta/carpeta.module').then( m => m.CarpetaPageModule),
     canActivate: [AuthGuard] // Proteger esta ruta, ya que es contenido del usuario
   },
+  {
+    path: 'workspace-create',
+    loadChildren: () => import('./modals/workspace-create/workspace-create.module').then( m => m.WorkspaceCreatePageModule)
+  },
+  {
+    path: 'workspace-detail',
+    loadChildren: () => import('./workspace-detail/workspace-detail.module').then( m => m.WorkspaceDetailPageModule)
+  },
+  {
+    path: 'workspace-rename',
+    loadChildren: () => import('./modals/workspace-rename/workspace-rename.module').then( m => m.WorkspaceRenamePageModule)
+  },
+  {
+    path: 'workspace-members',
+    loadChildren: () => import('./modals/workspace-members/workspace-members.module').then( m => m.WorkspaceMembersPageModule)
+  },
+
 
 ];
 

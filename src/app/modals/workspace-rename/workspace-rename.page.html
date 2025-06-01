@@ -1,0 +1,38 @@
+<!-- src\app\modals\workspace-rename\workspace-rename.page.html -->
+
+<ion-header>
+  <ion-toolbar color="secondary">
+    <ion-title>Renombrar Espacio</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismissModal()">Cerrar</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <p>Nombre actual: <strong>{{ currentName }}</strong></p>
+  <ion-item>
+    <ion-label position="stacked">Nuevo Nombre del Espacio</ion-label>
+    <ion-input
+      [(ngModel)]="newWorkspaceName"
+      name="newWorkspaceName"
+      placeholder="Ej: Proyecto Beta"
+      type="text"
+      (ionInput)="onNameChange($event)"
+      required
+    ></ion-input>
+  </ion-item>
+  <div *ngIf="errorMessage" class="error-message ion-padding-start">
+    {{ errorMessage }}
+  </div>
+</ion-content>
+<ion-footer>
+  <ion-toolbar>
+    <ion-button expand="full" (click)="renameWorkspace()" [disabled]="!newWorkspaceName.trim() || newWorkspaceName.trim() === currentName || isLoading">
+       <ion-spinner *ngIf="isLoading" name="crescent" slot="start"></ion-spinner>
+      Renombrar
+    </ion-button>
+  </ion-toolbar>
+</ion-footer>
+
+

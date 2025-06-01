@@ -146,7 +146,6 @@ En futuro, podrían usarse Camera, Haptics, etc., desde la UI.
 El proyecto sigue una estructura típica de una aplicación Angular con Ionic. A continuación, se detalla la estructura principal del proyecto:
 ## Estructura del Proyecto
 Listado de rutas de carpetas para el volumen Alonso
-El número de serie del volumen es CE3D-452B
 C:\USERS\ALONM\DESKTOP\CHATNOTE_IONIC\SRC\APP
 |   app-routing.module.ts
 |   app.component.html
@@ -162,7 +161,7 @@ C:\USERS\ALONM\DESKTOP\CHATNOTE_IONIC\SRC\APP
 |       carpeta.page.scss
 |       carpeta.page.spec.ts
 |       carpeta.page.ts
-|       
+|
 +---carpeta-create
 |       carpeta-create.module.ts
 |       carpeta-create.page.html
@@ -217,6 +216,31 @@ C:\USERS\ALONM\DESKTOP\CHATNOTE_IONIC\SRC\APP
 |       login.page.spec.ts
 |       login.page.ts
 |
++---modals
+|   +---workspace-create
+|   |       workspace-create-routing.module.ts
+|   |       workspace-create.module.ts
+|   |       workspace-create.page.html
+|   |       workspace-create.page.scss
+|   |       workspace-create.page.spec.ts
+|   |       workspace-create.page.ts
+|   |
+|   +---workspace-members
+|   |       workspace-members-routing.module.ts
+|   |       workspace-members.module.ts
+|   |       workspace-members.page.html
+|   |       workspace-members.page.scss
+|   |       workspace-members.page.spec.ts
+|   |       workspace-members.page.ts
+|   |
+|   \---workspace-rename
+|           workspace-rename-routing.module.ts
+|           workspace-rename.module.ts
+|           workspace-rename.page.html
+|           workspace-rename.page.scss
+|           workspace-rename.page.spec.ts
+|           workspace-rename.page.ts
+|
 +---quienes-somos
 |       quienes-somos-routing.module.ts
 |       quienes-somos.module.ts
@@ -241,15 +265,27 @@ C:\USERS\ALONM\DESKTOP\CHATNOTE_IONIC\SRC\APP
 |       register.page.spec.ts
 |       register.page.ts
 |
-\---services
-        auth.service.spec.ts
-        auth.service.ts
-        carpeta.service.ts
-        geolocation.service.ts
-        nota.service.ts
-        task.service.spec.ts
++---services
+|       archivo-adjunto.service.ts
+|       auth.service.spec.ts
+|       auth.service.ts
+|       carpeta.service.ts
+|       geolocation.service.ts
+|       nota.service.ts
+|       task.service.spec.ts
+|       workspace.service.spec.ts
+|       workspace.service.ts
+|
+\---workspace-detail
+        workspace-detail-routing.module.ts
+        workspace-detail.module.ts
+        workspace-detail.page.html
+        workspace-detail.page.scss
+        workspace-detail.page.spec.ts
+        workspace-detail.page.ts
 
 PS C:\Users\alonm\Desktop\ChatNote_IONIC> 
+
 # ======================================================================================
 # DESCRIPCION MODULOS Y ARCHIVOS CLAVES DEL PROYECTO
 
@@ -586,10 +622,81 @@ Durante la sesión de desarrollo y depuración reciente, se implementaron varias
 
 
 ## =================================================================
-UPDATE 01.06.2025
+## =================================================================
+## UPDATE 01.06.2025
 
->LA APLICACION A CAMBIADO SU NOMBRE, desde ChatNote a Quaderna.
-Aun muchos directorios siguen llamandose ChatNote, pero el nombre visible en la UI sera Quaderna y poco a poco se iran cambiando las referencias a ChatNote por el nuevo nombre Quaderna. 
+> **LA APLICACIÓN HA CAMBIADO SU NOMBRE:** Desde ChatNote a **Quaderna**.
+> Aunque muchos directorios y referencias internas aún pueden llamarse ChatNote, el nombre visible en la UI será Quaderna. Progresivamente, se actualizarán las referencias internas.
 
->
+### Resumen de Cambios Exitosos y Soluciones (Fase 1 - Espacios Colaborativos)
+
+#### Base de Datos (Oracle SQL):
+
+*   **Nuevos Procedimientos/Funciones Implementados y Funcionando:**
+    *   `prc_crear_espacio_colaborativo`: Crea espacios, asigna el owner y crea automáticamente una carpeta "General" dentro del nuevo espacio.
+    *   `fnc_leer_espacios_colaborativos_usr`: Lista los espacios colaborativos a los que pertenece un usuario (para el menú).
+    *   `fnc_obtener_detalle_espacio`: Obtiene los detalles de un espacio colaborativo específico.
+    *   `prc_renombrar_espacio_colaborativo`: Permite al owner del espacio cambiarle el nombre.
+    *   `prc_eliminar_espacio_colaborativo`: Permite al owner eliminar un espacio y, gracias a las correcciones de constraints, todo su contenido asociado (carpetas, notas, miembros, etc.).
+    *   `fnc_listar_miembros_espacio`: Lista los miembros de un espacio colaborativo.
+*   **Corrección de Constraints en la Tabla `Carpeta`:**
+    *   Se implementaron **índices únicos basados en funciones** (`IDX_UQ_CARPETA_PERSONAL` e `IDX_UQ_CARPETA_ESPACIO`). Esto resolvió el error `ORA-00001` que ocurría al intentar crear una carpeta "General" en múltiples espacios colaborativos, asegurando la unicidad de nombres de manera condicional (diferente para carpetas personales y carpetas de espacio).
+    *   Se modificó la Foreign Key `FK_CARP_ESP` (que vincula `Carpeta.espacio_id` con `EspacioColaborativo.espacio_id`) para incluir la cláusula **`ON DELETE CASCADE`**. Esto fue crucial para resolver el error `ORA-02292` (violación de integridad) que impedía eliminar espacios colaborativos que contenían carpetas.
+
+#### Backend (Django):
+
+*   **Nuevos Archivos Creados (Estructura Modular):**
+    *   `chatnote/api/services/workspace_service.py`: Encapsula la lógica de negocio y las llamadas a la base de datos para las funcionalidades de espacios colaborativos.
+    *   `chatnote/api/views_workspace.py`: Define los nuevos endpoints de la API REST dedicados a los espacios colaborativos.
+*   **Funciones Clave en `workspace_service.py` (Corregidas y Funcionando):**
+    *   `create_workspace()`
+    *   `rename_workspace()`
+    *   `delete_workspace()`
+    *   Estas funciones fueron refactorizadas para utilizar **bloques PL/SQL anónimos** ejecutados con `cur.execute()`. Este cambio fue la solución definitiva a los persistentes errores `DPY-3002: Python value of type "VariableWrapper" is not supported` y `TypeError` que surgían al intentar usar `cur.callproc()` con parámetros `OUT` y `cur.var()` de forma directa, especialmente con el cursor `FormatStylePlaceholderCursor` de Django.
+*   **Actualización de `chatnote/api/urls.py`:**
+    *   Se añadieron nuevas rutas que mapean a las vistas en `views_workspace.py` para exponer los endpoints `/api/workspaces/...` necesarios para crear, listar, detallar, renombrar, eliminar espacios y listar sus miembros.
+
+#### Frontend (Ionic/Angular):
+
+*   **Nuevos Archivos/Componentes Creados (Estructura Modular):**
+    *   `src/app/services/workspace.service.ts`: Servicio Angular para comunicarse con los nuevos endpoints de espacios colaborativos del backend.
+    *   Modales:
+        *   `src/app/modals/workspace-create/`: Para el formulario de creación de nuevos espacios.
+        *   `src/app/modals/workspace-rename/`: Para el formulario de renombrado de espacios.
+        *   `src/app/modals/workspace-members/`: Para mostrar la lista de miembros de un espacio.
+    *   Página:
+        *   `src/app/workspace-detail/`: Página dedicada para la visualización y gestión de un espacio colaborativo específico, incluyendo su propio menú de opciones.
+*   **Mejoras Clave en `src/app/app.component.ts` y `app.component.html`:**
+    *   Se integró la sección "Mis Espacios Colaborativos" en el menú lateral principal.
+    *   La lógica para cargar (`cargarEspaciosColaborativos`) y actualizar la lista `userWorkspaces` en el menú ahora funciona correctamente, reflejando los espacios creados y eliminados, y permitiendo la visualización de múltiples espacios.
+    *   Se implementó la navegación hacia y desde los espacios colaborativos.
+*   **Funcionalidad Lograda en la Fase 1 de Espacios Colaborativos:**
+    1.  **Creación:** Los usuarios pueden crear nuevos espacios colaborativos.
+    2.  **Listado y Navegación:** Los espacios se listan correctamente en el menú principal, la lista se actualiza dinámicamente, y los usuarios pueden navegar a la página de detalle de cada espacio.
+    3.  **Renombrado:** El owner de un espacio puede renombrarlo.
+    4.  **Eliminación:** El owner de un espacio puede eliminarlo, y esta acción se propaga correctamente en la base de datos (eliminando carpetas y contenido asociado) y se refleja en la UI.
+    5.  **Visualización de Miembros:** Se puede ver una lista de los miembros del espacio (actualmente solo el owner).
+    6.  **Retorno al Espacio Individual:** Los usuarios pueden navegar desde un espacio colaborativo de vuelta a su espacio individual.
+
+#### Puntos Críticos de Estancamiento y Sus Soluciones Durante la Sesión:
+
+1.  **Error `DPY-3002` / `TypeError` con `cur.var()` y `callproc` en Django:**
+    *   **Síntoma:** Imposibilidad de ejecutar procedimientos PL/SQL con parámetros `OUT` desde Django usando `cur.callproc()`, generando errores como `DPY-3002: Python value of type "VariableWrapper" is not supported` o `TypeError: FormatStylePlaceholderCursor.var() got an unexpected keyword argument 'arraysize'`.
+    *   **Iteraciones:** Se intentó ajustar cómo se pasaban las variables `OUT` a `callproc`, incluyendo la eliminación del argumento `arraysize` de `cur.var(str, ...)`.
+    *   **Solución Definitiva:** Se refactorizaron todas las funciones de servicio de Django que involucraban parámetros `OUT` (`create_workspace`, `rename_workspace`, `delete_workspace`) para utilizar **bloques PL/SQL anónimos** ejecutados mediante `cur.execute()`. Las variables Python para los parámetros `OUT` se crean con `cur.var()` y se pasan en el diccionario de `bind_params`. Este enfoque proporcionó un control más explícito y resolvió los problemas de compatibilidad con el cursor de Django.
+
+2.  **Error `ORA-00001: unique constraint ... violated` al Crear Carpeta "General":**
+    *   **Síntoma:** Al crear un segundo espacio colaborativo (o subsiguientes), la creación de su carpeta "General" por defecto fallaba con un error de violación de constraint única (`UQ_CARPETA_USER_NOMBRE`), aunque el espacio en sí se creaba.
+    *   **Análisis:** La constraint `UNIQUE (user_id, nombre)` en la tabla `Carpeta` no manejaba correctamente los casos donde `user_id` era `NULL` (como en las carpetas de espacio).
+    *   **Solución:** Se modificó la estrategia de unicidad en `Carpeta`. Se eliminó la constraint original problemática y se crearon dos **índices únicos basados en funciones** (`IDX_UQ_CARPETA_PERSONAL` y `IDX_UQ_CARPETA_ESPACIO`). Estos índices aseguran la unicidad de `(user_id, nombre)` solo para carpetas personales y de `(espacio_id, nombre)` solo para carpetas de espacio.
+
+3.  **Error `ORA-02292: integrity constraint ... violated` al Eliminar Espacio Colaborativo:**
+    *   **Síntoma:** No se podían eliminar espacios colaborativos si contenían carpetas (como la carpeta "General").
+    *   **Análisis:** La Foreign Key `FK_CARP_ESP` en la tabla `Carpeta` (que referencia a `EspacioColaborativo`) no tenía la cláusula `ON DELETE CASCADE`.
+    *   **Solución:** Se modificó la constraint `FK_CARP_ESP` para incluir `ON DELETE CASCADE`, permitiendo que la eliminación de un espacio propague la eliminación a sus carpetas y, consecuentemente, a las notas y archivos dentro de esas carpetas.
+## =================================================================
+## =================================================================
+
+
+
 

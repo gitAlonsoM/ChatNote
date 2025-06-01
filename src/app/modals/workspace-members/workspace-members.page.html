@@ -1,0 +1,42 @@
+<!-- src\app\modals\workspace-members\workspace-members.page.html -->
+
+<ion-header>
+  <ion-toolbar color="light">
+    <ion-title>Miembros de: {{ workspaceName || 'Espacio' }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismissModal()">Cerrar</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <div *ngIf="isLoading" class="ion-text-center">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Cargando miembros...</p>
+  </div>
+
+  <div *ngIf="!isLoading && members.length === 0 && !errorMessage">
+    <p class="ion-text-center">Este espacio aún no tiene miembros (o no se pudieron cargar).</p>
+  </div>
+  
+  <div *ngIf="errorMessage" class="error-message ion-text-center">
+      {{ errorMessage }}
+  </div>
+
+  <ion-list *ngIf="!isLoading && members.length > 0">
+    <ion-item *ngFor="let member of members">
+      <ion-avatar slot="start">
+        <!-- Podríamos usar un generador de avatares o iniciales si no hay imagen -->
+        <div class="initial-avatar">{{ member.nombre_usuario | slice:0:1 }}</div>
+      </ion-avatar>
+      <ion-label>
+        <h2>{{ member.nombre_usuario }} <ion-badge color="primary" *ngIf="member.es_owner_espacio">Owner</ion-badge></h2>
+        <p>{{ member.email }}</p>
+        <p><small>Rol: {{ member.rol_en_espacio }}</small></p>
+        <p *ngIf="member.invitation_date && member.nombre_invitador">
+          <small>Invitado por {{ member.nombre_invitador }} el {{ member.invitation_date | date:'shortDate' }}</small>
+        </p>
+      </ion-label>
+    </ion-item>
+  </ion-list>
+</ion-content>

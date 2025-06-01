@@ -1,26 +1,34 @@
 //src\app\app.component.ts
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Platform, ToastController, ModalController, MenuController } from '@ionic/angular';
-import { Router, NavigationEnd, Event as RouterEvent } from '@angular/router'; // Importar RouterEvent
+import { Router, NavigationEnd, Event as RouterEvent } from '@angular/router';
 import { AuthService } from './services/auth.service';
-import { Subscription, Subject } from 'rxjs'; // Subject ya estaba, Subscription también
-import { filter, takeUntil, tap } from 'rxjs/operators'; // tap puede ser útil para logs si es necesario
+import { Subscription, Subject } from 'rxjs'; 
+import { filter, takeUntil, tap, distinctUntilChanged } from 'rxjs/operators';
 
 import { CarpetaCreatePage } from './carpeta-create/carpeta-create.page';
 import { CarpetaService, Carpeta } from './services/carpeta.service';
 
+import { WorkspaceService, Workspace } from './services/workspace.service'; 
+import { WorkspaceCreatePage } from './modals/workspace-create/workspace-create.page'; 
+
 @Component({
   selector: 'app-root',
   templateUrl: 'app.component.html',
-  // styleUrls: ['app.component.scss'], // No es necesario
 })
+
+
+
 export class AppComponent implements OnInit, OnDestroy {
   public isLoggedIn: boolean = false;
   private authSubscription: Subscription | null = null;
-  private routerEventsSubscription: Subscription | null = null; // Renombrado para claridad
+  private routerEventsSubscription: Subscription | null = null;
   private ngUnsubscribe = new Subject<void>();
   public carpetas: Carpeta[] = [];
   public isLoadingCarpetas: boolean = false;
+  
+  public userWorkspaces: Workspace[] = []; 
+  public isLoadingWorkspaces: boolean = false; 
 
   constructor(
     private platform: Platform,
@@ -30,7 +38,8 @@ export class AppComponent implements OnInit, OnDestroy {
     private menuCtrl: MenuController,
     private modalCtrl: ModalController,
     private carpetaService: CarpetaService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private workspaceService: WorkspaceService 
   ) {
     console.log('[AppComponent] Constructor: Componente raíz instanciado.');
     this.initializeApp();
@@ -38,84 +47,106 @@ export class AppComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     console.log('DEBUG: [AppComponent] ngOnInit called.');
+
+
     this.authSubscription = this.authService.isLoggedIn$
       .pipe(takeUntil(this.ngUnsubscribe))
       .subscribe(async (loggedInStatus) => {
-        console.log(`DEBUG: [AppComponent] isLoggedIn$ emitted: ${loggedInStatus}. Current URL (at emission time): ${this.router.url}`);
-        const previousIsLoggedIn = this.isLoggedIn;
         this.isLoggedIn = loggedInStatus;
-        console.log('[AppComponent] Estado isLoggedIn actualizado:', this.isLoggedIn);
-        this.cdr.detectChanges(); // Forzar detección de cambios
-
-        // Cancelar suscripción anterior al router si existe
-        if (this.routerEventsSubscription) {
-          console.log('DEBUG: [AppComponent] Unsubscribing from previous router events.');
-          this.routerEventsSubscription.unsubscribe();
-          this.routerEventsSubscription = null;
-        }
+        console.log(`DEBUG: [AppComponent] isLoggedIn$ status changed to: ${this.isLoggedIn}. Current URL: ${this.router.url}`); // DEBUG: Cambio de estado de login
+        this.cdr.detectChanges();
 
         if (this.isLoggedIn) {
-          console.log('DEBUG: [AppComponent] User is logged in. Setting up router subscription for folder loading.');
-          // Si el usuario está logueado, escuchar eventos de navegación
-          this.routerEventsSubscription = this.router.events.pipe(
-            filter((event: RouterEvent): event is NavigationEnd => event instanceof NavigationEnd), // Filtrar y asegurar el tipo
-            takeUntil(this.ngUnsubscribe)
+          console.log('DEBUG: [AppComponent] User is logged in. Setting up data loading and router listeners.'); // DEBUG: Usuario logueado
+          this.setupDataLoadingOnLoginAndNavigation();
 
-          ).subscribe(async (navEndEvent: NavigationEnd) => { // Ahora navEndEvent es correctamente tipado como NavigationEnd
-            console.log(`DEBUG: [AppComponent] NavigationEnd event. New URL: ${navEndEvent.urlAfterRedirects}. User is loggedIn: ${this.isLoggedIn}`); // Añadido isLoggedIn aquí para confirmar
-            const currentUrl = navEndEvent.urlAfterRedirects;
-            const isLoginPage = currentUrl.includes('/login');
-            const isRegisterPage = currentUrl.includes('/register');
-
-            console.log(`DEBUG: [AppComponent] RouterEvent: currentUrl: ${currentUrl}, isLoginPage: ${isLoginPage}, isRegisterPage: ${isRegisterPage}`);
-
-            // Asegurarse de que realmente estamos logueados ANTES de cargar carpetas basado en NavigationEnd
-            if (this.isLoggedIn && !isLoginPage && !isRegisterPage) {
-              console.log('DEBUG: [AppComponent] RouterEvent: Conditions met (loggedIn, not on login/register). Calling cargarCarpetasPersonales().');
-              await this.cargarCarpetasPersonales();
-            } else {
-              console.log(`DEBUG: [AppComponent] RouterEvent: Conditions NOT met for folder load. isLoggedIn: ${this.isLoggedIn}, onLogin: ${isLoginPage}, onRegister: ${isRegisterPage}`);
-            }
-          });
-
-          // Intento de carga inicial si ya estamos en una ruta válida y el estado de login acaba de cambiar a true
-          // Esta lógica es principalmente para el menú cuando la app se carga/refresca con un usuario ya logueado.
-          // No necesariamente restaura la vista principal a la ruta profunda por sí misma.
-          const initialUrl = this.router.url; // URL en el momento de la emisión de isLoggedIn$
-          if (previousIsLoggedIn === false && loggedInStatus === true && !initialUrl.includes('/login') && !initialUrl.includes('/register')) {
-            console.log(`DEBUG: [AppComponent] isLoggedIn$ changed to true and initial URL (${initialUrl}) is valid. Attempting immediate folder load for menu.`);
-
-            await this.cargarCarpetasPersonales();
+          if (!this.router.url.startsWith('/espacio/')) {
+             await this.loadAllUserDataForMenu();
           }
 
         } else {
-           this.carpetas = [];
-          this.isLoadingCarpetas = false;
-          console.log('[AppComponent] Usuario cerró sesión o estado inicial es no logueado.');
-          console.log('DEBUG: [AppComponent] User is NOT logged in.');
-          this.cdr.detectChanges();
-
-          const currentUrl = this.router.url;
-          // SOLO redirigir a /login si:
-          // 1. El usuario NO está logueado.
-          // 2. NO estamos ya en /login o /register.
-          // 3. NO estamos en la ruta raíz '/' (porque app-routing la redirigirá a /login de todas formas,
-          //    y queremos darle a AuthService la oportunidad de emitir `true` si hay sesión persistente).
-          //    Si después de que AuthService confirme que no hay sesión, y seguimos en '/', la redirección de app-routing actuará.
-          if (currentUrl !== '/' && !currentUrl.includes('/login') && !currentUrl.includes('/register')) {
-            console.log(`DEBUG: [AppComponent] Not logged in and not on root/login/register. Current URL: ${currentUrl}. Redirecting to /login.`);
-            await this.router.navigate(['/login'], { replaceUrl: true });
-          } else {
-            console.log(`DEBUG: [AppComponent] Not logged in, but on root, login, or register page. No explicit redirection needed from AppComponent. Current URL: ${currentUrl}`);
-          }
-        }
-      },
+          console.log('DEBUG: [AppComponent] User is logged out or initial state is not logged in.'); // DEBUG: Usuario no logueado
+          this.clearUserDataForMenu(); 
+          if (this.router.url !== '/' && !this.isAuthPage(this.router.url)) { // Uso de this.isAuthPage
+              console.log(`DEBUG: [AppComponent] Not logged in, redirecting from ${this.router.url} to /login.`); // DEBUG: Redirección a login
+              this.router.navigate(['/login'], { replaceUrl: true });
+          }}
+        },
       (error) => {
         console.error('[AppComponent] Error en isLoggedIn$ subscription:', error);
         console.error('DEBUG: [AppComponent] Error in isLoggedIn$ subscription:', error);
       }
     );
   }
+
+    private clearUserDataForMenu() {
+      this.carpetas = [];
+      this.isLoadingCarpetas = false;
+      this.userWorkspaces = []; 
+      this.isLoadingWorkspaces = false; 
+      console.log('DEBUG: [AppComponent] User data for menu CLEARED.'); 
+      this.cdr.detectChanges();
+  }
+  
+
+  private isValidAppUrl(url: string): boolean {
+    const isValid = url !== '/' && !url.includes('/login') && !url.includes('/register');
+    return isValid;
+  }
+  
+  private isAuthPage(url: string): boolean {
+    const isAuth = url.includes('/login') || url.includes('/register');
+    return isAuth;
+  }
+
+  private setupDataLoadingOnLoginAndNavigation() {
+    if (this.routerEventsSubscription) {
+      this.routerEventsSubscription.unsubscribe();
+      console.log('DEBUG: [AppComponent] Previous router subscription unsubscribed.'); // DEBUG: Desuscripción previa
+    }
+    this.routerEventsSubscription = this.router.events.pipe(
+      filter((event: RouterEvent): event is NavigationEnd => event instanceof NavigationEnd),
+      takeUntil(this.ngUnsubscribe)
+    ).subscribe(async (navEndEvent: NavigationEnd) => {
+      console.log(`DEBUG: [AppComponent] NavigationEnd to: ${navEndEvent.urlAfterRedirects}. User isLoggedIn: ${this.isLoggedIn}`); // DEBUG: Evento de navegación
+      
+      // Solo cargar datos del menú si el usuario está logueado y NO está navegando DENTRO de un espacio colaborativo
+      if (this.isLoggedIn && !navEndEvent.urlAfterRedirects.startsWith('/espacio/')) {
+        console.log('DEBUG: [AppComponent] Navigation to a non-workspace page while logged in. Reloading menu data.'); // DEBUG: Carga de datos para menú
+        await this.loadAllUserDataForMenu();
+      } else if (this.isLoggedIn && navEndEvent.urlAfterRedirects.startsWith('/espacio/')) {
+        console.log('DEBUG: [AppComponent] Navigation within a workspace. Main menu data NOT reloaded.'); // DEBUG: Navegación dentro de workspace
+      }
+    });
+
+
+    if (this.isLoggedIn && !this.router.url.startsWith('/espacio/')) {
+        console.log(`DEBUG: [AppComponent] Initial check: User logged in on ${this.router.url}. Loading menu data.`); // DEBUG: Carga inicial de datos
+        this.loadAllUserDataForMenu();
+    }
+  }
+
+  private async loadAllUserDataForMenu() {
+      if (!this.isLoggedIn) {
+          console.log('DEBUG: [AppComponent] loadAllUserDataForMenu skipped: User not logged in.'); // DEBUG: Omitido por no estar logueado
+          return;
+      }
+      console.log('DEBUG: [AppComponent] loadAllUserDataForMenu - Starting to load folders and workspaces for menu.'); // DEBUG: Inicio de carga de datos del menú
+      
+
+      try {
+        await Promise.all([
+            this.cargarCarpetasPersonales(),
+            this.cargarEspaciosColaborativos()
+        ]);
+        console.log('DEBUG: [AppComponent] loadAllUserDataForMenu - Both folders and workspaces loading initiated/completed.'); // DEBUG: Carga iniciada/completada
+      } catch (error: any) {
+        console.error('DEBUG: [AppComponent] loadAllUserDataForMenu - Error during Promise.all:', error.message); // DEBUG: Error en Promise.all
+      }
+      this.cdr.detectChanges(); 
+  }
+
+
 
   initializeApp() {
     this.platform.ready().then(() => {
@@ -145,12 +176,12 @@ export class AppComponent implements OnInit, OnDestroy {
         this.carpetas = carpetasRecibidas;
         this.isLoadingCarpetas = false;
         console.log('[AppComponent] Carpetas personales cargadas/actualizadas:', this.carpetas);
-        this.cdr.detectChanges(); // Actualizar UI con las carpetas
+        this.cdr.detectChanges(); 
       },
       error: (error) => {
         this.isLoadingCarpetas = false;
         console.error('[AppComponent] Error al cargar carpetas personales:', error);
-        this.cdr.detectChanges(); // Actualizar UI para ocultar spinner
+        this.cdr.detectChanges(); 
 
         const currentUrl = this.router.url;
         const isLoginPage = currentUrl.includes('/login');
@@ -164,6 +195,65 @@ export class AppComponent implements OnInit, OnDestroy {
         this.carpetas = [];
       }
     });
+  }
+
+
+  async cargarEspaciosColaborativos() {
+    if (!this.isLoggedIn || this.isLoadingWorkspaces) return;
+    console.log('DEBUG: [AppComponent] cargarEspaciosColaborativos: Solicitando lista de espacios...');
+    this.isLoadingWorkspaces = true;
+    this.cdr.detectChanges();
+
+    this.workspaceService.listUserWorkspaces().pipe(
+      takeUntil(this.ngUnsubscribe)
+    ).subscribe({
+      next: (workspacesRecibidos) => {
+        this.userWorkspaces = workspacesRecibidos;
+        this.isLoadingWorkspaces = false;
+        console.log('DEBUG: [AppComponent] Espacios colaborativos cargados/actualizados:', this.userWorkspaces.length);
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        this.isLoadingWorkspaces = false;
+        this.userWorkspaces = [];
+        console.error('DEBUG: [AppComponent] Error al cargar espacios colaborativos:', error);
+        
+
+        if (this.isValidAppUrl(this.router.url) && !this.isAuthPage(this.router.url)) {
+             this.showCustomToast('Error al cargar tus espacios colaborativos.', 'danger');
+        }
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  async openCreateWorkspaceModal() {
+    console.log('DEBUG: [AppComponent] openCreateWorkspaceModal. LoggedIn:', this.isLoggedIn);
+    if (!this.isLoggedIn) {
+      await this.showCustomToast('Debes iniciar sesión para crear espacios.', 'warning');
+      this.router.navigate(['/login']);
+      await this.closeCurrentMenu();
+      return;
+    }
+    await this.closeCurrentMenu();
+    const modal = await this.modalCtrl.create({
+      component: WorkspaceCreatePage 
+    });
+    modal.onDidDismiss().then(async (result) => {
+      console.log('DEBUG: [AppComponent] Modal de creación de ESPACIO CERRADO. Role:', result.role, 'Data:', result.data);
+      if (result.role === 'confirm' && result.data && result.data.created) {
+        this.showCustomToast(`Espacio "${result.data.workspaceName}" creado.`, 'success');
+        await this.cargarEspaciosColaborativos(); 
+      }
+    });
+    return await modal.present();
+  }
+
+  async navigateToWorkspace(workspace: Workspace) {
+    await this.closeCurrentMenu();
+    console.log(`DEBUG: [AppComponent] Navegando a espacio colaborativo: ${workspace.nombre} (ID: ${workspace.espacio_id})`);
+
+    this.router.navigate(['/espacio', workspace.espacio_id]);
   }
 
   async openCreateFolderModal() {
@@ -182,7 +272,7 @@ export class AppComponent implements OnInit, OnDestroy {
       if (result.role === 'confirm' && result.data && result.data.created) {
         console.log('[AppComponent] Carpeta creada (modal):', result.data.folderName);
         this.showCustomToast(`Carpeta "${result.data.folderName}" creada.`, 'success');
-        this.cargarCarpetasPersonales(); // Volver a cargar para incluir la nueva
+        this.cargarCarpetasPersonales(); 
       }
     });
     return await modal.present();
@@ -224,11 +314,6 @@ export class AppComponent implements OnInit, OnDestroy {
     this.ngUnsubscribe.next();
     this.ngUnsubscribe.complete();
 
-    // Aunque takeUntil debería manejar estas suscripciones, es una buena práctica
-    // adicional desuscribirse explícitamente si las referencias directas existen.
-    // Sin embargo, con takeUntil(this.ngUnsubscribe) en cada pipe,
-    // la desuscripción explícita de authSubscription y routerEventsSubscription
-    // aquí podría ser redundante, pero no dañina.
     if (this.authSubscription) {
         this.authSubscription.unsubscribe();
     }

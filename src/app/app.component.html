@@ -64,6 +64,42 @@
         </div>
                  <!-- FIN SECCIÓN DE CARPETAS -->
 
+        <div *ngIf="isLoggedIn"> <!-- Visible solo si está logueado -->
+          <ion-item-divider>
+            <ion-label>Mis Espacios Colaborativos</ion-label>
+          </ion-item-divider>
+
+          <!-- Botón para Crear Nuevo Espacio Colaborativo -->
+          <ion-item button (click)="openCreateWorkspaceModal()">
+            <ion-icon slot="start" name="people-circle-outline"></ion-icon> <!-- Cambiado icono -->
+            <ion-label>Crear Espacio Colaborativo</ion-label>
+          </ion-item>
+
+          <!-- Mostrar mensaje si se están cargando los espacios -->
+          <ion-item *ngIf="isLoadingWorkspaces">
+            <ion-spinner name="dots" slot="start"></ion-spinner>
+            <ion-label>Cargando espacios...</ion-label>
+          </ion-item>
+
+          <!-- Iterar y mostrar cada espacio colaborativo -->
+          <ion-item
+            button
+            *ngFor="let workspace of userWorkspaces"
+            (click)="navigateToWorkspace(workspace)"
+          >
+            <ion-icon slot="start" name="briefcase-outline"></ion-icon> <!-- Cambiado icono -->
+            <ion-label>{{ workspace.nombre }}</ion-label>
+          </ion-item>
+
+          <!-- Mostrar mensaje si no hay espacios y no se están cargando -->
+          <ion-item *ngIf="!isLoadingWorkspaces && userWorkspaces.length === 0">
+            <ion-icon slot="start" name="information-circle-outline" color="medium"></ion-icon>
+            <ion-label class="ion-text-wrap" color="medium">No perteneces a ningún espacio colaborativo.</ion-label>
+          </ion-item>
+        </div>
+
+
+
       <!--   <ion-item button routerLink="/login">
           <ion-icon slot="start" name="log-in-outline"></ion-icon>
           <ion-label>Login</ion-label> 
@@ -179,12 +215,5 @@
     </ion-list>
   </ion-content>
 </ion-menu>
-
-
-
-
-
-    
-
 
 </ion-app>
