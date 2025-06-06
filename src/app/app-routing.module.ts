@@ -79,6 +79,17 @@ const routes: Routes = [
     path: 'workspace-members',
     loadChildren: () => import('./modals/workspace-members/workspace-members.module').then( m => m.WorkspaceMembersPageModule)
   },
+  {
+    path: 'workspace-invite',
+    loadChildren: () => import('./modals/workspace-invite/workspace-invite.module').then( m => m.WorkspaceInvitePageModule)
+  },
+  {
+    path: 'invitations-manager',
+    loadChildren: () => import('./modals/invitations-manager/invitations-manager.module').then( m => m.InvitationsManagerPageModule)
+  },
+
+  
+
 
 
 ];

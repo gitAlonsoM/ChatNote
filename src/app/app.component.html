@@ -15,10 +15,10 @@
           <ion-icon slot="start" name="book-outline"></ion-icon>
           <ion-label>Libreta</ion-label> 
         </ion-item> -->
-        <ion-item button routerLink="/chat/custom-instruction">
+        <!-- <ion-item button routerLink="/chat/custom-instruction">
           <ion-icon slot="start" name="settings-outline"></ion-icon>
           <ion-label>Custom Instruction</ion-label>
-        </ion-item>
+        </ion-item> -->
         <!-- <ion-item button routerLink="/chat">
           <ion-icon slot="start" name="chatbubbles-outline"></ion-icon>
           <ion-label>Chat</ion-label>
@@ -63,6 +63,21 @@
           </ion-item>
         </div>
                  <!-- FIN SECCIÓN DE CARPETAS -->
+
+        <div *ngIf="isLoggedIn">
+          <ion-item-divider>
+            <ion-label>Mis Invitaciones</ion-label>
+          </ion-item-divider>
+          <ion-item button (click)="openInvitationsModal()">
+            <ion-icon slot="start" name="mail-unread-outline"></ion-icon>
+            <ion-label>Invitaciones Pendientes</ion-label>
+            <ion-badge slot="end" color="warning" *ngIf="pendingInvitations.length > 0">
+              {{ pendingInvitations.length }}
+            </ion-badge>
+          </ion-item>
+        </div>
+
+
 
         <div *ngIf="isLoggedIn"> <!-- Visible solo si está logueado -->
           <ion-item-divider>
@@ -136,10 +151,10 @@
           <ion-icon slot="start" name="information-circle-outline"></ion-icon>
           <ion-label>Quiénes somos</ion-label> 
         </ion-item>
-        <ion-item button routerLink="/login">
+        <!-- <ion-item button routerLink="/login">
           <ion-icon slot="start" name="log-in-outline"></ion-icon>
           <ion-label>Login</ion-label> 
-        </ion-item>
+        </ion-item> -->
         <ion-item button (click)="logout()" *ngIf="isLoggedIn">
           <ion-icon slot="start" name="log-out-outline"></ion-icon>
           <ion-label>Desconectarse</ion-label>
@@ -170,10 +185,10 @@
             <ion-icon slot="start" name="information-circle-outline"></ion-icon>
             <ion-label>Quiénes somos</ion-label> 
           </ion-item> -->
-          <ion-item button routerLink="/login">
+          <!-- <ion-item button routerLink="/login">
             <ion-icon slot="start" name="log-in-outline"></ion-icon>
             <ion-label>Login</ion-label> 
-          </ion-item>
+          </ion-item> -->
           <ion-item button (click)="logout()" *ngIf="isLoggedIn">
             <ion-icon slot="start" name="log-out-outline"></ion-icon>
             <ion-label>Desconectarse</ion-label>

@@ -1,0 +1,38 @@
+<!-- src\app\modals\invitations-manager\invitations-manager.page.html -->
+<ion-header>
+  <ion-toolbar color="tertiary">
+    <ion-title>Mis Invitaciones Pendientes</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="close()">Cerrar</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div *ngIf="isLoading" class="ion-text-center ion-padding">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Cargando invitaciones...</p>
+  </div>
+
+  <div *ngIf="!isLoading && invitations.length === 0" class="ion-padding ion-text-center empty-state">
+    <ion-icon name="mail-unread-outline" size="large"></ion-icon>
+    <p>No tienes invitaciones pendientes por ahora.</p>
+  </div>
+  
+  <ion-list *ngIf="!isLoading && invitations.length > 0">
+    <ion-item *ngFor="let inv of invitations; let i = index">
+      <ion-label>
+        <h2>{{ inv.nombre_espacio }}</h2>
+        <p>Invitado por: {{ inv.nombre_invitador }}</p>
+      </ion-label>
+      <ion-buttons slot="end">
+        <ion-button fill="clear" color="success" (click)="respond(inv.espacio_id, 'ACEPTADO', i)" [disabled]="isResponding[i]">
+          <ion-icon slot="icon-only" name="checkmark-circle-outline"></ion-icon>
+        </ion-button>
+        <ion-button fill="clear" color="danger" (click)="respond(inv.espacio_id, 'RECHAZADO', i)" [disabled]="isResponding[i]">
+          <ion-icon slot="icon-only" name="close-circle-outline"></ion-icon>
+        </ion-button>
+      </ion-buttons>
+    </ion-item>
+  </ion-list>
+</ion-content>

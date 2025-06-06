@@ -1,6 +1,6 @@
 // src/app/chat/chat.service.ts
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError, from } from 'rxjs';
 import { catchError, tap, switchMap } from 'rxjs/operators'; // Importa switchMap
 import { Platform } from '@ionic/angular';
@@ -61,14 +61,25 @@ IMPORTANTE: Mantén siempre la estructura de modos y no abandones tu rol princip
   }
 
 
-  private backendApiUrl = 'http://127.0.0.1:8000/api/llm/';
+  private backendApiUrl: string; // Ya no se inicializa aquí directamente
+
 
   constructor(
     private http: HttpClient,
     private platform: Platform,
     private authService: AuthService // DEBUG: inject AuthService to obtain UID
-  ) { }
-
+  ) { 
+ // Determinar la URL del backend según la plataforma
+    if (this.platform.is('android') && !this.platform.is('mobileweb')) {
+      // Para emulador Android nativo, usa 10.0.2.2 para acceder al localhost del host
+      this.backendApiUrl = 'http://10.0.2.2:8000/api/llm/';
+      console.log('DEBUG: [ChatService] Running on Android native. Backend API URL for LLM:', this.backendApiUrl); // DEBUG
+    } else {
+      // Para web (ionic serve) u otras plataformas
+      this.backendApiUrl = 'http://127.0.0.1:8000/api/llm/';
+      console.log('DEBUG: [ChatService] Running on Web/Other. Backend API URL for LLM:', this.backendApiUrl); // DEBUG
+    }
+  }
 
   sendMessageToLLM(messages: { role: string; content: string }[]): Observable<any> { //metodo para el LLM, retorna un observable para manejar la respuesta
     // Usamos switchMap para esperar a que la promesa de getCurrentUser() se resuelva
@@ -77,9 +88,8 @@ IMPORTANTE: Mantén siempre la estructura de modos y no abandones tu rol princip
         const uid = user?.uid; // DEBUG: retrieve current user's UID
         console.log(`DEBUG: Sending message with UID=${uid}`); // DEBUG: log UID on each call
 
-        const headers = {
+       const headers: { [key: string]: string } = { // Tipado explícito para headers
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.backendApiUrl}`,
         };
 
         const messagesWithSystemPrompt = [
@@ -100,33 +110,74 @@ IMPORTANTE: Mantén siempre la estructura de modos y no abandones tu rol princip
         console.log("DEBUG: Mensajes enviados:", messages);
 
 
-        if (this.platform.is('hybrid')) {
-          // Ejecutándose en dispositivo o emulador
-          const options = {
-            url: this.backendApiUrl || '',
-            headers: headers,
-            data: body || {},
-            params: {}, // Agregar un objeto params vacío
-          };
+        if (this.platform.is('hybrid') && !this.platform.is('mobileweb')) { // Más específico para Android Nativo
+          // Ejecutándose en dispositivo o emulador Android
+          // Para @capacitor-community/http, asegúrate de que 'params' no sea 'undefined' si el plugin no lo maneja bien.
+          // Aunque para POST con 'data', 'params' usualmente no se usa, el plugin podría tener una expectativa.
+          // Sin embargo, la causa más probable del NPE en setUrlParams es si 'params' se pasa y es null o undefined
+          // y el plugin intenta iterar sus keys.
+          // Vamos a pasar 'data' directamente como segundo argumento y 'headers' en un objeto de opciones.
+          // La firma de Http.post es: post<T = any>(options: HttpOptions): Promise<HttpResponse>;
+          // donde HttpOptions tiene url, data, params, headers.
 
-          return from(Http.post(options)).pipe( //retorna la respuesta de la api como post,
-            catchError((error) => { //Depuracion en caso de errores
-              console.error('Error al enviar mensaje al LLM:', error);
-              alert(`Error al enviar mensaje: ${JSON.stringify(error, null, 2)}`);
-              console.log('URL:', options.url);
-              console.log('Headers:', options.headers);
-              console.log('Data:', options.data);
-              return throwError(() => error);
+          const postOptions: import('@capacitor-community/http').HttpOptions = { // Tipado explícito para claridad
+            url: this.backendApiUrl,
+            headers: headers,
+            data: body, // El cuerpo de la solicitud POST
+          params: {} //
+          };
+          console.log('DEBUG: [ChatService] Native HTTP POST. Options:', JSON.stringify(postOptions, null, 2)); // DEBUG: Muestra el objeto options completo
+
+          return from(Http.post(postOptions)).pipe( // Pasar el objeto postOptions
+            tap(response => {
+              console.log('DEBUG: [ChatService] Native HTTP response:', response); // DEBUG
+              // Asegúrate de que la respuesta tenga el formato esperado
+              if (response.status !== 200 && response.status !== 201) {
+                console.warn('DEBUG: [ChatService] Native HTTP response with status:', response.status); // DEBUG
+              }
+            }),
+            catchError((error) => {
+              console.error('DEBUG: [ChatService] Error en Native HTTP POST:', error); // DEBUG
+              // El error de Capacitor/Http puede ser un objeto con 'message', 'status', etc.
+              let errorMsgForUser = 'Error de conexión con el asistente.';
+              if (error && error.message) {
+                if (error.message.includes("NullPointerException")) {
+                  errorMsgForUser = "Error interno (NPE) al procesar la solicitud HTTP. Revisa los logs.";
+                  console.error("DEBUG: [ChatService] NullPointerException in Http plugin. Details:", JSON.stringify(error, null, 2)); // DEBUG
+                } else if (error.message.includes("Cleartext HTTP")) {
+                    errorMsgForUser = "Error de seguridad: Tráfico HTTP no permitido.";
+                    console.error("DEBUG: [ChatService] Specific Cleartext HTTP error. Check network_security_config.xml and AndroidManifest.xml"); // DEBUG
+                } else if (error.status === 0 || error.message.includes("ERR_CONNECTION_REFUSED") || error.message.includes("Unable to resolve host")) {
+                    errorMsgForUser = "No se pudo conectar al servidor. Verifica que el backend esté corriendo en 10.0.2.2:8000 y la red del emulador.";
+                    console.error("DEBUG: [ChatService] Specific Connection/Resolution error. Is backend running on 10.0.2.2:8000?", error); // DEBUG
+                } else {
+                    errorMsgForUser = `Error: ${error.message}`;
+                }
+              } else if (typeof error === 'string') {
+                errorMsgForUser = error;
+              }
+              // alert(`Error al enviar mensaje: ${errorMsgForUser}`); // Evitar alert, usar Toast.
+              return throwError(() => new Error(errorMsgForUser));
             })
           );
 
         } else {
-          // Ejecutándose en el navegador
           const httpHeaders = new HttpHeaders(headers);
+          console.log('DEBUG: [ChatService] Web HTTP POST. URL:', this.backendApiUrl, 'Headers:', httpHeaders, 'Body Keys:', Object.keys(body)); // DEBUG
           return this.http.post(this.backendApiUrl, body, { headers: httpHeaders }).pipe(
-            catchError((error) => {
-              console.error('Error al enviar mensaje al LLM:', error);
-              return throwError(() => error);
+            tap(response => console.log('DEBUG: [ChatService] Web HTTP response:', response)), // DEBUG
+            catchError((error: HttpErrorResponse) => { // Tipar el error para mejor manejo
+              console.error('DEBUG: [ChatService] Error en Web HTTP POST:', error); // DEBUG
+              let errorMsg = 'Error de red o del servidor.';
+              if (error.status === 0) {
+                errorMsg = 'No se pudo conectar al servidor. ¿Está el backend Django corriendo en 127.0.0.1:8000?';
+                 console.error("DEBUG: [ChatService] Specific Connection Refused error (web). Is backend running on 127.0.0.1:8000?"); // DEBUG
+              } else if (error.error && typeof error.error.error === 'string') {
+                errorMsg = error.error.error; // Si el backend envía un mensaje de error JSON
+              } else if (error.message) {
+                errorMsg = error.message;
+              }
+              return throwError(() => new Error(errorMsg)); // Propagar un error más descriptivo
             })
           );
         }
@@ -134,7 +185,6 @@ IMPORTANTE: Mantén siempre la estructura de modos y no abandones tu rol princip
     );
   }
 }
-
 
 
 

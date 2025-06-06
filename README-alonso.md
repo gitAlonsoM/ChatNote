@@ -469,12 +469,12 @@ npm install @capacitor/android
 npx cap add android     (Estructura compatible con Android en la carpeta android/. Se usa una sola vez. )
 
 
-## Reconstruir, Sincronizar y emular con android studio
+##  Reconstruir, Sincronizar y emular con android studio ##  
 ionic build
 npx cap sync android
 npx cap open android 
 *Medium phone API TyramisuPrivacySandbox -->Run app.
-
+ 
  
 ## Generacion de APK Sin Firmar (1)
 npx cap sync
@@ -696,6 +696,50 @@ Durante la sesión de desarrollo y depuración reciente, se implementaron varias
     *   **Solución:** Se modificó la constraint `FK_CARP_ESP` para incluir `ON DELETE CASCADE`, permitiendo que la eliminación de un espacio propague la eliminación a sus carpetas y, consecuentemente, a las notas y archivos dentro de esas carpetas.
 ## =================================================================
 ## =================================================================
+## UPDATE 05.06.2025
+
+Resumen de la Sesión: Implementación del Módulo de Invitaciones EN ESPACIOS COLABORATIVOS.
+SE IMPLEMENTO con éxito el sistema completo de gestión de invitaciones para los espacios colaborativos. El objetivo era permitir a los dueños de espacios invitar a otros usuarios y que estos pudieran gestionar dichas invitaciones, todo de forma interna en la aplicación.
+Funcionalidad Lograda:
+Invitar Usuarios: El propietario (owner) de un espacio colaborativo puede, desde el menú de dicho espacio, abrir un modal e invitar a otros usuarios registrados en la plataforma introduciendo su dirección de email.
+Gestión de Invitaciones: Los usuarios invitados ven una nueva sección "Mis Invitaciones" en el menú principal, con un contador de notificaciones pendientes. Desde allí, pueden abrir un modal para ver, aceptar o rechazar las invitaciones.
+Unirse a Espacios: Al aceptar una invitación, el espacio colaborativo correspondiente aparece en la lista "Mis Espacios Colaborativos" del usuario, otorgándole rol de MEMBER.
+Abandonar Espacios: Un miembro (MEMBER) de un espacio puede abandonarlo en cualquier momento a través de una opción en el menú del espacio. El owner no puede abandonar su propio espacio, solo eliminarlo.
+Componentes Técnicos Clave Implementados:
+Base de Datos (Oracle):
+Se reutilizó la tabla EspacioUsuario para gestionar el ciclo de vida de una invitación a través de la columna estado (PENDIENTE, ACEPTADO, RECHAZADO).
+Se crearon procedimientos almacenados cruciales con validaciones robustas:
+prc_invitar_usuario_a_espacio: Verifica permisos de owner, existencia del invitado y previene invitaciones duplicadas.
+prc_responder_a_invitacion: Actualiza el estado de la invitación de PENDIENTE a ACEPTADO o elimina el registro si es rechazada.
+prc_abandonar_espacio_colaborativo: Permite a un miembro eliminarse de EspacioUsuario, pero bloquea la acción para el owner.
+
+
+Se añadió la función fnc_leer_invitaciones_pendientes_usr para obtener la lista de invitaciones de un usuario.
+
+Backend (Django):
+Se creó un nuevo servicio invitation_service.py para encapsular toda la lógica de negocio de las invitaciones, actuando como puente entre las vistas y los procedimientos de la base de datos.
+Se crearon nuevas vistas en views_invitation.py para manejar las peticiones HTTP.
+Se añadieron nuevos endpoints en api/urls.py para exponer estas funcionalidades, por ejemplo: POST /api/workspaces/<id>/invitations/ para invitar y PUT /api/invitations/<id>/ para responder.
+
+Frontend (Ionic):
+Se creó el servicio invitation.service.ts para comunicarse con la nueva API de invitaciones.
+Se desarrollaron dos nuevos modales: WorkspaceInvitePage para que el owner envíe invitaciones y InvitationsManagerPage para que el usuario gestione las suyas.
+Se modificó workspace-detail.page para añadir los botones de "Invitar Usuario" y "Abandonar Espacio" en el menú contextual.
+Se actualizó app.component para mostrar la sección "Mis Invitaciones" y su contador correspondiente en el menú principal, recargando los datos dinámicamente.
+
+Desafíos y Soluciones de la Sesión:
+Errores de Compilación Iniciales: La primera implementación resultó en múltiples errores de compilación en Ionic. El diagnóstico reveló tres causas principales:
+Falta de Archivos: El archivo invitation.service.ts no había sido creado, causando una cascada de errores Cannot find module. La solución fue simplemente crear el archivo con el código correcto.
+Decoradores  Varias clases de páginas (.page.ts) carecían del decorador @Component, lo que provocaba el error NG6001. Se solucionó añadiendo el decorador a cada clase afectada.
+Tipado Implícito  La configuración estricta de TypeScript requería tipos explícitos para los parámetros en los callbacks de subscribe. Se corrigió añadiendo los tipos correspondientes (ej. (data: Invitation[]) => ...).
+
+
+Estructura HTML Incorrecta: Un error NG5002 persistió debido a etiquetas mal anidadas y duplicadas en el menú de workspace-detail.page.html. Se solucionó reestructurando y limpiando el código HTML para que fuera válido y semánticamente correcto.
+Llamadas Múltiples a la API: Se observó que las acciones del usuario (como el login) provocaban múltiples recargas de los datos del menú. Para solucionar esta ineficiencia, se refactorizó la lógica en app.component.ts, utilizando operadores de RxJS como distinctUntilChanged y debounceTime para asegurar que la carga de datos se realice solo una vez y de manera eficiente tras un cambio de estado o navegación
+
+## =================================================================
+## =================================================================
+
 
 
 

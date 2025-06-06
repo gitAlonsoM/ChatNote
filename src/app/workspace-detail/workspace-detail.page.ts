@@ -5,10 +5,14 @@ import { ModalController, ToastController, AlertController, MenuController, Load
 import { WorkspaceService, Workspace } from '../services/workspace.service';
 import { Subscription, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { InvitationService } from '../services/invitation.service';
+
 
 // Importar los modales que se usarán
 import { WorkspaceRenamePage } from '../modals/workspace-rename/workspace-rename.page';
 import { WorkspaceMembersPage } from '../modals/workspace-members/workspace-members.page';
+import { WorkspaceInvitePage } from '../modals/workspace-invite/workspace-invite.page';
+
 // Si WorkspaceDeleteConfirm es un componente:
 // import { WorkspaceDeleteConfirmComponent } from '../components/workspace-delete-confirm/workspace-delete-confirm.component';
 
@@ -34,7 +38,8 @@ export class WorkspaceDetailPage implements OnInit, OnDestroy {
     private alertCtrl: AlertController,
     private menuCtrl: MenuController,
     private loadingCtrl: LoadingController,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private invitationService: InvitationService 
   ) {
     console.log('DEBUG: [WorkspaceDetailPage] Constructor.');
   }
@@ -71,6 +76,9 @@ export class WorkspaceDetailPage implements OnInit, OnDestroy {
     this.workspaceService.getWorkspaceDetails(this.workspaceId).pipe(
       takeUntil(this.ngUnsubscribe)
     ).subscribe({
+      
+      
+      
       next: async (data) => {
         await loading.dismiss();
         this.isLoading = false;
@@ -119,6 +127,63 @@ export class WorkspaceDetailPage implements OnInit, OnDestroy {
     });
     return await modal.present();
   }
+
+
+
+  async openInviteUserModal() {
+    if (!this.workspace) return;
+    await this.menuCtrl.close('workspaceMenu');
+    const modal = await this.modalCtrl.create({
+      component: WorkspaceInvitePage,
+      componentProps: {
+        workspaceId: this.workspace.espacio_id,
+        workspaceName: this.workspace.nombre
+      }
+    });
+    // No action needed on dismiss, toast is handled in the modal
+    return await modal.present();
+  }
+
+  async leaveWorkspace() {
+    if (!this.workspace) return;
+    await this.menuCtrl.close('workspaceMenu');
+    
+    const alert = await this.alertCtrl.create({
+      header: 'Abandonar Espacio',
+      message: `¿Seguro que quieres abandonar "${this.workspace.nombre}"? Perderás el acceso a su contenido.`,
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Abandonar',
+          cssClass: 'danger',
+          handler: () => this.confirmLeaveWorkspace()
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  private async confirmLeaveWorkspace() {
+    if (!this.workspaceId) return;
+    const loading = await this.loadingCtrl.create({ message: 'Abandonando espacio...' });
+    await loading.present();
+
+    this.invitationService.leaveWorkspace(this.workspaceId).subscribe({
+      next: (res: { message: string }) => {
+        loading.dismiss();
+        this.showToast(res.message, 'success');
+        this.router.navigate(['/chat'], { replaceUrl: true });
+      },
+      error: (err: Error) => {
+        loading.dismiss();
+        this.showToast(err.message, 'danger');
+      }
+    });
+  
+  }
+
+
+
 
   async openDeleteWorkspaceModal() {
     if (!this.workspace) return;
@@ -205,4 +270,7 @@ export class WorkspaceDetailPage implements OnInit, OnDestroy {
     this.ngUnsubscribe.next();
     this.ngUnsubscribe.complete();
   }
+
+
+
 }

@@ -1,13 +1,12 @@
 <!-- src\app\workspace-detail\workspace-detail.page.html -->
-
 <ion-header>
-  <ion-toolbar color="tertiary"> <!-- Color distintivo para espacios colaborativos -->
+  <ion-toolbar color="tertiary">
     <ion-buttons slot="start">
-      <ion-back-button defaultHref="/chat"></ion-back-button> <!-- O a donde deba volver -->
+      <ion-back-button defaultHref="/chat"></ion-back-button>
     </ion-buttons>
     <ion-title>{{ workspace?.nombre || 'Cargando Espacio...' }}</ion-title>
     <ion-buttons slot="end">
-      <ion-menu-button menu="workspaceMenu"></ion-menu-button> <!-- Botón para el menú lateral derecho -->
+      <ion-menu-button menu="workspaceMenu"></ion-menu-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
@@ -26,26 +25,42 @@
           <ion-label>Mi Espacio Individual</ion-label>
         </ion-item>
         
+        <!-- Owner Actions -->
         <ion-item-divider *ngIf="workspace?.es_owner_solicitante">
             <ion-label>Gestión (Owner)</ion-label>
         </ion-item-divider>
+        
+        <ion-item button (click)="openInviteUserModal()" *ngIf="workspace?.es_owner_solicitante">
+          <ion-icon name="person-add-outline" slot="start"></ion-icon>
+          <ion-label>Invitar Usuario</ion-label>
+        </ion-item>
+
         <ion-item button (click)="openRenameWorkspaceModal()" *ngIf="workspace?.es_owner_solicitante">
           <ion-icon name="create-outline" slot="start"></ion-icon>
           <ion-label>Renombrar Espacio</ion-label>
         </ion-item>
+
         <ion-item button (click)="openDeleteWorkspaceModal()" *ngIf="workspace?.es_owner_solicitante" color="danger">
           <ion-icon name="trash-outline" slot="start"></ion-icon>
           <ion-label>Eliminar Espacio</ion-label>
         </ion-item>
 
+        <!-- Member Actions -->
+        <ion-item button (click)="leaveWorkspace()" *ngIf="!workspace?.es_owner_solicitante" color="warning">
+          <ion-icon name="log-out-outline" slot="start"></ion-icon>
+          <ion-label>Abandonar Espacio</ion-label>
+        </ion-item>
+
+        <!-- Collaboration Section -->
         <ion-item-divider>
             <ion-label>Colaboración</ion-label>
         </ion-item-divider>
+        
         <ion-item button (click)="openViewMembersModal()">
             <ion-icon name="people-outline" slot="start"></ion-icon>
             <ion-label>Ver Miembros</ion-label>
         </ion-item>
-        <!-- Más opciones futuras: Invitar Usuario (Owner), Crear Carpeta en Espacio, etc. -->
+
         <ion-item button disabled>
             <ion-icon name="folder-open-outline" slot="start"></ion-icon>
             <ion-label>Carpetas del Espacio (Próximamente)</ion-label>
@@ -55,10 +70,10 @@
     </ion-content>
   </ion-menu>
 
-  <!-- El router-outlet principal para el contenido del espacio -->
+  <!-- Main content outlet -->
   <ion-router-outlet id="workspace-main-content"></ion-router-outlet>
 
-  <!-- Contenido principal de la página del espacio -->
+  <!-- Main page content -->
   <div class="ion-padding" *ngIf="!isLoading && workspace">
     <h3>Bienvenido a: {{ workspace.nombre }}</h3>
     <p>ID del Espacio: {{ workspace.espacio_id }}</p>
@@ -68,7 +83,7 @@
     <hr>
     <h4>Contenido del Espacio (En desarrollo)</h4>
     <p>Aquí se mostrará el chat grupal, las notas y carpetas del espacio.</p>
-    <!-- Placeholder para el chat -->
+    <!-- Placeholder for chat -->
     <div style="border: 1px dashed #ccc; padding: 10px; margin-top: 15px; min-height: 100px;">
         Chat Grupal (Próximamente)
     </div>

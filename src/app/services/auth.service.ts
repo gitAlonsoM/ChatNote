@@ -3,13 +3,18 @@ import { Injectable } from '@angular/core';
 import {Auth,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendPasswordResetEmail, signOut, User, UserCredential} from '@angular/fire/auth';
 import { BehaviorSubject, ReplaySubject } from 'rxjs';
 import { Router } from '@angular/router';
-import { ToastController } from '@ionic/angular';
+import { ToastController, Platform } from '@ionic/angular'; // Importar Platform
 import { HttpClient } from '@angular/common/http';
 import { inject } from '@angular/core';
+
 
 @Injectable({
   providedIn: 'root'
 })
+
+
+
+
 export class AuthService {
 
   private isLoggedInSubject = new BehaviorSubject<boolean>(false); // Inicializa en false
@@ -33,6 +38,9 @@ export class AuthService {
 
       // Se dispara cada vez que Firebase detecta cambio de auth-state
     this.auth.onAuthStateChanged(user => {
+
+
+      
       console.log('DEBUG: [AuthService] onAuthStateChanged. User:', user ? user.uid : 'null'); // DEBUG
       this.currentUserSubject.next(user); // Actualizar currentUser
       this.isLoggedInSubject.next(!!user); // Actualizar estado de login

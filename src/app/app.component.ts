@@ -12,13 +12,13 @@ import { CarpetaService, Carpeta } from './services/carpeta.service';
 import { WorkspaceService, Workspace } from './services/workspace.service'; 
 import { WorkspaceCreatePage } from './modals/workspace-create/workspace-create.page'; 
 
+import { InvitationService, Invitation } from './services/invitation.service';
+import { InvitationsManagerPage } from './modals/invitations-manager/invitations-manager.page';
+
 @Component({
   selector: 'app-root',
   templateUrl: 'app.component.html',
 })
-
-
-
 export class AppComponent implements OnInit, OnDestroy {
   public isLoggedIn: boolean = false;
   private authSubscription: Subscription | null = null;
@@ -26,6 +26,9 @@ export class AppComponent implements OnInit, OnDestroy {
   private ngUnsubscribe = new Subject<void>();
   public carpetas: Carpeta[] = [];
   public isLoadingCarpetas: boolean = false;
+
+  public pendingInvitations: Invitation[] = [];
+  public isLoadingInvitations: boolean = false;
   
   public userWorkspaces: Workspace[] = []; 
   public isLoadingWorkspaces: boolean = false; 
@@ -39,7 +42,8 @@ export class AppComponent implements OnInit, OnDestroy {
     private modalCtrl: ModalController,
     private carpetaService: CarpetaService,
     private cdr: ChangeDetectorRef,
-    private workspaceService: WorkspaceService 
+    private workspaceService: WorkspaceService,
+    private invitationService: InvitationService
   ) {
     console.log('[AppComponent] Constructor: Componente raíz instanciado.');
     this.initializeApp();
@@ -84,6 +88,9 @@ export class AppComponent implements OnInit, OnDestroy {
       this.isLoadingCarpetas = false;
       this.userWorkspaces = []; 
       this.isLoadingWorkspaces = false; 
+      this.pendingInvitations = [];
+      this.isLoadingInvitations = false;
+
       console.log('DEBUG: [AppComponent] User data for menu CLEARED.'); 
       this.cdr.detectChanges();
   }
@@ -137,7 +144,8 @@ export class AppComponent implements OnInit, OnDestroy {
       try {
         await Promise.all([
             this.cargarCarpetasPersonales(),
-            this.cargarEspaciosColaborativos()
+            this.cargarEspaciosColaborativos(),
+            this.loadPendingInvitations() // Add invitation loading
         ]);
         console.log('DEBUG: [AppComponent] loadAllUserDataForMenu - Both folders and workspaces loading initiated/completed.'); // DEBUG: Carga iniciada/completada
       } catch (error: any) {
@@ -226,6 +234,46 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+  async loadPendingInvitations() {
+    if (!this.isLoggedIn || this.isLoadingInvitations) return;
+    this.isLoadingInvitations = true;
+    this.cdr.detectChanges();
+
+    this.invitationService.getPendingInvitations().pipe(
+      takeUntil(this.ngUnsubscribe)
+    ).subscribe({
+      next: (invitations: Invitation[]) => {
+        this.pendingInvitations = invitations;
+        this.isLoadingInvitations = false;
+        console.log(`DEBUG: [AppComponent] Pending invitations loaded: ${invitations.length}`);
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        this.isLoadingInvitations = false;
+        this.pendingInvitations = [];
+        console.error('DEBUG: [AppComponent] Error loading pending invitations:', err);
+        // Do not show toast for this, it's less critical than workspaces/folders
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  async openInvitationsModal() {
+    await this.closeCurrentMenu();
+    const modal = await this.modalCtrl.create({
+      component: InvitationsManagerPage
+    });
+    modal.onDidDismiss().then(async (result) => {
+      // If an invitation was accepted or rejected, reload all data
+      if (result.role === 'confirm' && result.data && result.data.reloaded) {
+        console.log('DEBUG: [AppComponent] Invitation modal closed, reloading all user data.');
+        await this.loadAllUserDataForMenu();
+      }
+    });
+    return await modal.present();
+  }
+
 
   async openCreateWorkspaceModal() {
     console.log('DEBUG: [AppComponent] openCreateWorkspaceModal. LoggedIn:', this.isLoggedIn);

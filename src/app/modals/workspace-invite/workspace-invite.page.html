@@ -1,0 +1,27 @@
+<!-- src\app\modals\workspace-invite\workspace-invite.page.html -->
+<ion-header>
+  <ion-toolbar color="secondary">
+    <ion-title>Invitar Usuario a {{ workspaceName }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="cancel()">Cerrar</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <form (ngSubmit)="invite()" #inviteForm="ngForm">
+    <ion-item>
+      <ion-label position="floating">Email del Usuario</ion-label>
+      <ion-input type="email" [(ngModel)]="email" name="email" required email #emailInput="ngModel"></ion-input>
+    </ion-item>
+    <div *ngIf="emailInput.invalid && (emailInput.dirty || emailInput.touched)" class="error-message ion-padding-start">
+      <div *ngIf="emailInput.errors?.['required']">El email es requerido.</div>
+      <div *ngIf="emailInput.errors?.['email']">Por favor, ingrese un email válido.</div>
+    </div>
+    
+    <ion-button expand="block" type="submit" [disabled]="inviteForm.invalid || isInviting" class="ion-margin-top">
+      <span *ngIf="!isInviting">Enviar Invitación</span>
+      <ion-spinner *ngIf="isInviting" name="crescent"></ion-spinner>
+    </ion-button>
+  </form>
+</ion-content>
