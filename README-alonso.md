@@ -144,8 +144,9 @@ En futuro, podrían usarse Camera, Haptics, etc., desde la UI.
 
 ## Estructura del Proyecto
 El proyecto sigue una estructura típica de una aplicación Angular con Ionic. A continuación, se detalla la estructura principal del proyecto:
-## Estructura del Proyecto
-Listado de rutas de carpetas para el volumen Alonso
+
+Listado de rutas de carpetas 
+
 C:\USERS\ALONM\DESKTOP\CHATNOTE_IONIC\SRC\APP
 |   app-routing.module.ts
 |   app.component.html
@@ -161,7 +162,7 @@ C:\USERS\ALONM\DESKTOP\CHATNOTE_IONIC\SRC\APP
 |       carpeta.page.scss
 |       carpeta.page.spec.ts
 |       carpeta.page.ts
-|
+|       
 +---carpeta-create
 |       carpeta-create.module.ts
 |       carpeta-create.page.html
@@ -217,6 +218,14 @@ C:\USERS\ALONM\DESKTOP\CHATNOTE_IONIC\SRC\APP
 |       login.page.ts
 |
 +---modals
+|   +---invitations-manager
+|   |       invitations-manager-routing.module.ts
+|   |       invitations-manager.module.ts
+|   |       invitations-manager.page.html
+|   |       invitations-manager.page.scss
+|   |       invitations-manager.page.spec.ts
+|   |       invitations-manager.page.ts
+|   |
 |   +---workspace-create
 |   |       workspace-create-routing.module.ts
 |   |       workspace-create.module.ts
@@ -224,6 +233,14 @@ C:\USERS\ALONM\DESKTOP\CHATNOTE_IONIC\SRC\APP
 |   |       workspace-create.page.scss
 |   |       workspace-create.page.spec.ts
 |   |       workspace-create.page.ts
+|   |
+|   +---workspace-invite
+|   |       workspace-invite-routing.module.ts
+|   |       workspace-invite.module.ts
+|   |       workspace-invite.page.html
+|   |       workspace-invite.page.scss
+|   |       workspace-invite.page.spec.ts
+|   |       workspace-invite.page.ts
 |   |
 |   +---workspace-members
 |   |       workspace-members-routing.module.ts
@@ -271,6 +288,7 @@ C:\USERS\ALONM\DESKTOP\CHATNOTE_IONIC\SRC\APP
 |       auth.service.ts
 |       carpeta.service.ts
 |       geolocation.service.ts
+|       invitation.service.ts
 |       nota.service.ts
 |       task.service.spec.ts
 |       workspace.service.spec.ts

@@ -1,8 +1,8 @@
 // src/app/services/nota.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { Observable, throwError, from } from 'rxjs'; // Importa 'from' para convertir la promesa en Observable
-import { catchError, map, tap, switchMap } from 'rxjs/operators'; // Importa 'switchMap'
+import { Observable, throwError, from } from 'rxjs'; 
+import { catchError, map, tap, switchMap } from 'rxjs/operators'; 
 import { AuthService } from './auth.service';
 
 export interface Nota {
@@ -23,7 +23,7 @@ export interface NotaCreadaResponse {
   providedIn: 'root'
 })
 export class NotaService {
-  private apiUrl = 'http://127.0.0.1:8000/api/notes/'; // Endpoint para notas
+  private apiUrl = 'http://127.0.0.1:8000/api/notes/';
 
   constructor(private http: HttpClient, private authService: AuthService) {
     console.log('[NotaService] Constructor. API URL:', this.apiUrl);
@@ -118,7 +118,7 @@ export class NotaService {
           return throwError(() => new Error('Usuario no autenticado para eliminar nota.'));
         }
 
-        const params = new HttpParams().set('uid', user.uid); // Acceso seguro al uid
+        const params = new HttpParams().set('uid', user.uid); 
         const httpOptions = { params: params };
         const url = `${this.apiUrl}${notaId}/`;
 
@@ -132,20 +132,20 @@ export class NotaService {
   }
 
 
-  moveNoteToFolder(notaId: number, newFolderId: number): Observable<any> { // Method to move a note to a new folder
-    console.log(`DEBUG: [NotaService] Attempting to move note. NoteID: ${notaId}, NewFolderID: ${newFolderId}`); // DEBUG: Log call
+  moveNoteToFolder(notaId: number, newFolderId: number): Observable<any> { 
+    console.log(`DEBUG: [NotaService] Attempting to move note. NoteID: ${notaId}, NewFolderID: ${newFolderId}`);
 
     return from(this.authService.getCurrentUser()).pipe(
       switchMap(user => {
         if (!user || !user.uid) {
           const errorMsg = 'User not authenticated. Cannot move note.';
-          console.error('DEBUG: [NotaService] Error:', errorMsg); // DEBUG: Log auth error
+          console.error('DEBUG: [NotaService] Error:', errorMsg);
           return throwError(() => new Error(errorMsg));
         }
 
-        const payload = { // Payload for the PATCH request
-          uid: user.uid, // Acceso seguro al uid
-          new_folder_id: newFolderId // Key as expected by the backend
+        const payload = {
+          uid: user.uid,
+          new_folder_id: newFolderId 
         };
         const httpOptions = {
           headers: new HttpHeaders({ 'Content-Type': 'application/json' })

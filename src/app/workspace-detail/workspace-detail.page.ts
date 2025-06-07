@@ -1,21 +1,16 @@
 //src\app\workspace-detail\workspace-detail.page.ts
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core'; 
 import { ActivatedRoute, Router } from '@angular/router';
 import { ModalController, ToastController, AlertController, MenuController, LoadingController } from '@ionic/angular';
 import { WorkspaceService, Workspace } from '../services/workspace.service';
 import { Subscription, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { InvitationService } from '../services/invitation.service';
-
-
-// Importar los modales que se usarán
 import { WorkspaceRenamePage } from '../modals/workspace-rename/workspace-rename.page';
 import { WorkspaceMembersPage } from '../modals/workspace-members/workspace-members.page';
 import { WorkspaceInvitePage } from '../modals/workspace-invite/workspace-invite.page';
-
-// Si WorkspaceDeleteConfirm es un componente:
-// import { WorkspaceDeleteConfirmComponent } from '../components/workspace-delete-confirm/workspace-delete-confirm.component';
-
+import { WorkspaceChatService, WorkspaceChatMessage } from '../services/workspace-chat.service';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-workspace-detail',
@@ -23,8 +18,16 @@ import { WorkspaceInvitePage } from '../modals/workspace-invite/workspace-invite
   styleUrls: ['./workspace-detail.page.scss'],
 })
 export class WorkspaceDetailPage implements OnInit, OnDestroy {
+  @ViewChild('chatMessagesContainer', { static: false }) private chatMessagesContainer!: ElementRef;
   workspace: Workspace | null = null;
   workspaceId: number | null = null;
+
+
+  messages: WorkspaceChatMessage[] = [];
+  userMessage: string = '';
+  currentUserId: string | null = null;
+
+
   isLoading: boolean = true;
   errorMessage: string | null = null;
   private ngUnsubscribe = new Subject<void>();
@@ -33,6 +36,10 @@ export class WorkspaceDetailPage implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private workspaceService: WorkspaceService,
+
+    private workspaceChatService: WorkspaceChatService,
+    private authService: AuthService,
+
     private modalCtrl: ModalController,
     private toastCtrl: ToastController,
     private alertCtrl: AlertController,
@@ -42,6 +49,16 @@ export class WorkspaceDetailPage implements OnInit, OnDestroy {
     private invitationService: InvitationService 
   ) {
     console.log('DEBUG: [WorkspaceDetailPage] Constructor.');
+
+
+
+    this.authService.getCurrentUser().then(user => {
+      this.currentUserId = user?.uid ?? null;
+
+
+    });
+
+
   }
 
   ngOnInit() {
@@ -51,9 +68,11 @@ export class WorkspaceDetailPage implements OnInit, OnDestroy {
     ).subscribe(params => {
       const id = params.get('id');
       if (id) {
-        this.workspaceId = +id; // Convertir a número
+        this.workspaceId = +id; 
         console.log('DEBUG: [WorkspaceDetailPage] Workspace ID from route:', this.workspaceId);
         this.loadWorkspaceDetails();
+        this.loadChatHistory();
+
       } else {
         this.isLoading = false;
         this.errorMessage = "No se especificó un ID de espacio.";
@@ -101,10 +120,86 @@ export class WorkspaceDetailPage implements OnInit, OnDestroy {
     });
   }
 
+
+  loadChatHistory() {
+    if (!this.workspaceId) return;
+    console.log(`DEBUG: [WorkspaceDetailPage] Loading chat history for workspace ${this.workspaceId}`);
+    this.workspaceChatService.getChatHistory(this.workspaceId).pipe(
+      takeUntil(this.ngUnsubscribe)
+    ).subscribe({
+      next: (history) => {
+        this.messages = history;
+        console.log('DEBUG: [WorkspaceDetailPage] Chat history loaded:', this.messages);
+        this.scrollToBottom();
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('DEBUG: [WorkspaceDetailPage] Error loading chat history:', err);
+        this.showToast('Error al cargar el historial del chat.', 'danger');
+      }
+    });
+  }
+
+  sendMessage() {
+    if (!this.userMessage.trim() || !this.workspaceId) return;
+
+    const tempUserMessage: WorkspaceChatMessage = {
+      authorId: this.currentUserId || '',
+      authorName: 'Tú',
+      content: this.userMessage,
+      role: 'user',
+      timestamp: new Date().toISOString()
+    };
+    this.messages.push(tempUserMessage);
+    this.scrollToBottom();
+
+    const messageToSend = this.userMessage;
+    this.userMessage = '';
+
+    const conversationHistoryForLLM = this.messages.map(m => ({ role: m.role, content: m.content }));
+
+    this.workspaceChatService.sendMessageToLLM(this.workspaceId, conversationHistoryForLLM).pipe(
+      takeUntil(this.ngUnsubscribe)
+    ).subscribe({
+      next: (response) => {
+        const botReplyContent = response?.choices?.[0]?.message?.content || 'No se pudo obtener respuesta.';
+        const llmMessage: WorkspaceChatMessage = {
+          authorId: this.currentUserId || 'llm-author', // The LLM response is triggered by the current user
+          authorName: 'Asistente IA',
+          content: botReplyContent,
+          role: 'assistant',
+          timestamp: new Date().toISOString()
+        };
+        this.messages.push(llmMessage);
+        this.scrollToBottom();
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('DEBUG: [WorkspaceDetailPage] Error sending message:', err);
+        this.showToast('Error al enviar mensaje al asistente.', 'danger');
+      }
+    });
+  }
+
+  isMyMessage(message: WorkspaceChatMessage): boolean {
+    // A message is "mine" if I am the author AND it is not an LLM response.
+    // In this non-real-time version, all non-LLM messages are from the current user.
+    return message.authorId === this.currentUserId && message.role === 'user';
+  }
+
+  private scrollToBottom(): void {
+    setTimeout(() => {
+      if (this.chatMessagesContainer?.nativeElement) {
+        this.chatMessagesContainer.nativeElement.scrollTop = this.chatMessagesContainer.nativeElement.scrollHeight;
+      }
+    }, 100);
+  }
+  
+
   navigateToIndividualSpace() {
     console.log('DEBUG: [WorkspaceDetailPage] navigateToIndividualSpace - Navigating to /chat');
     this.menuCtrl.close('workspaceMenu');
-    this.router.navigate(['/chat']); // Asumiendo que /chat es tu espacio individual principal
+    this.router.navigate(['/chat']); 
   }
 
   async openRenameWorkspaceModal() {
@@ -112,7 +207,7 @@ export class WorkspaceDetailPage implements OnInit, OnDestroy {
     console.log('DEBUG: [WorkspaceDetailPage] openRenameWorkspaceModal for workspace:', this.workspace.nombre);
     await this.menuCtrl.close('workspaceMenu');
     const modal = await this.modalCtrl.create({
-      component: WorkspaceRenamePage, // Asegúrate que este modal exista y esté importado
+      component: WorkspaceRenamePage, 
       componentProps: {
         workspaceId: this.workspace.espacio_id,
         currentName: this.workspace.nombre
@@ -122,7 +217,7 @@ export class WorkspaceDetailPage implements OnInit, OnDestroy {
       console.log('DEBUG: [WorkspaceDetailPage] Rename modal dismissed. Role:', result.role, 'Data:', result.data);
       if (result.role === 'confirm' && result.data && result.data.renamed) {
         this.showToast('Espacio renombrado exitosamente.', 'success');
-        await this.loadWorkspaceDetails(); // Recargar detalles para ver el nuevo nombre
+        await this.loadWorkspaceDetails(); 
       }
     });
     return await modal.present();
@@ -140,7 +235,7 @@ export class WorkspaceDetailPage implements OnInit, OnDestroy {
         workspaceName: this.workspace.nombre
       }
     });
-    // No action needed on dismiss, toast is handled in the modal
+ 
     return await modal.present();
   }
 
@@ -227,7 +322,7 @@ export class WorkspaceDetailPage implements OnInit, OnDestroy {
         console.log('DEBUG: [WorkspaceDetailPage] deleteWorkspace - Success response:', response);
         if (response.success) {
           this.showToast('Espacio eliminado exitosamente.', 'success');
-          this.router.navigate(['/chat']); // Volver al espacio individual
+          this.router.navigate(['/chat']); 
         } else {
           this.showToast(response.message || 'Error al eliminar el espacio.', 'danger');
         }
@@ -245,13 +340,12 @@ export class WorkspaceDetailPage implements OnInit, OnDestroy {
     console.log('DEBUG: [WorkspaceDetailPage] openViewMembersModal for workspace ID:', this.workspaceId);
     await this.menuCtrl.close('workspaceMenu');
     const modal = await this.modalCtrl.create({
-        component: WorkspaceMembersPage, // Asegúrate que este modal exista
+        component: WorkspaceMembersPage,
         componentProps: {
             workspaceId: this.workspaceId,
             workspaceName: this.workspace?.nombre 
         }
     });
-    // No se espera un resultado que modifique esta página, es solo informativo
     return await modal.present();
   }
 

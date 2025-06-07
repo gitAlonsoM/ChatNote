@@ -11,9 +11,9 @@ export interface Workspace {
   espacio_id: number;
   nombre: string;
   owner_id: string;
-  nombre_owner?: string; // Opcional, para listado
-  rol_usuario_en_espacio?: string; // Opcional, para listado
-  es_owner_solicitante?: boolean; // Para detalles
+  nombre_owner?: string; 
+  rol_usuario_en_espacio?: string; 
+  es_owner_solicitante?: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -38,7 +38,6 @@ export class WorkspaceService {
     console.log('DEBUG: [WorkspaceService] Constructor. API URL Base:', this.apiUrlBase);
   }
 
-  // Crear un nuevo espacio colaborativo
   createWorkspace(nombreEspacio: string): Observable<any> {
     console.log('DEBUG: [WorkspaceService] createWorkspace. Nombre:', nombreEspacio);
     return from(this.authService.getCurrentUser()).pipe(
@@ -58,7 +57,6 @@ export class WorkspaceService {
     );
   }
 
-  // Listar los espacios colaborativos de un usuario
   listUserWorkspaces(): Observable<Workspace[]> {
     console.log('DEBUG: [WorkspaceService] listUserWorkspaces');
     return from(this.authService.getCurrentUser()).pipe(
@@ -77,7 +75,6 @@ export class WorkspaceService {
     );
   }
 
-  // Obtener detalles de un espacio colaborativo específico
   getWorkspaceDetails(workspaceId: number): Observable<Workspace> {
     console.log('DEBUG: [WorkspaceService] getWorkspaceDetails. WorkspaceID:', workspaceId);
     return from(this.authService.getCurrentUser()).pipe(
@@ -85,7 +82,7 @@ export class WorkspaceService {
         if (!user || !user.uid) {
           return throwError(() => new Error('User not authenticated. Cannot get workspace details.'));
         }
-        const params = new HttpParams().set('uid', user.uid); // uid del usuario que solicita
+        const params = new HttpParams().set('uid', user.uid); 
         const url = `${this.apiUrlBase}${workspaceId}/`;
         console.log('DEBUG: [WorkspaceService] getWorkspaceDetails - Sending GET to:', url, 'Params:', params.toString());
         return this.http.get<Workspace>(url, { params }).pipe(
@@ -96,7 +93,6 @@ export class WorkspaceService {
     );
   }
 
-  // Renombrar un espacio colaborativo
   renameWorkspace(workspaceId: number, nuevoNombre: string): Observable<any> {
     console.log('DEBUG: [WorkspaceService] renameWorkspace. WorkspaceID:', workspaceId, 'NuevoNombre:', nuevoNombre);
     return from(this.authService.getCurrentUser()).pipe(
@@ -116,7 +112,6 @@ export class WorkspaceService {
     );
   }
 
-  // Eliminar un espacio colaborativo
   deleteWorkspace(workspaceId: number): Observable<any> {
     console.log('DEBUG: [WorkspaceService] deleteWorkspace. WorkspaceID:', workspaceId);
     return from(this.authService.getCurrentUser()).pipe(
@@ -124,7 +119,7 @@ export class WorkspaceService {
         if (!user || !user.uid) {
           return throwError(() => new Error('User not authenticated. Cannot delete workspace.'));
         }
-        const params = new HttpParams().set('uid', user.uid); // uid del owner para verificación
+        const params = new HttpParams().set('uid', user.uid); 
         const url = `${this.apiUrlBase}${workspaceId}/`;
         console.log('DEBUG: [WorkspaceService] deleteWorkspace - Sending DELETE to:', url, 'Params:', params.toString());
         return this.http.delete<any>(url, { params }).pipe(
@@ -135,12 +130,9 @@ export class WorkspaceService {
     );
   }
 
-  // Listar miembros de un espacio colaborativo
   listWorkspaceMembers(workspaceId: number): Observable<WorkspaceMember[]> {
     console.log('DEBUG: [WorkspaceService] listWorkspaceMembers. WorkspaceID:', workspaceId);
-    // Para esta función, el UID del solicitante es opcional en el backend por ahora,
-    // pero podríamos añadirlo si la lógica de permisos lo requiere.
-    // const uid_solicitante = this.authService.getCurrentUser()?.uid; // Si se necesitara
+  
     const url = `${this.apiUrlBase}${workspaceId}/members/`;
     console.log('DEBUG: [WorkspaceService] listWorkspaceMembers - Sending GET to:', url);
     return this.http.get<{ members: WorkspaceMember[] }>(url).pipe(
@@ -153,11 +145,9 @@ export class WorkspaceService {
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'An unknown error occurred!';
     if (error.error instanceof ErrorEvent) {
-      // Client-side or network error
       errorMessage = `Error: ${error.error.message}`;
     } else {
-      // Backend returned an unsuccessful response code.
-      // The response body may contain clues as to what went wrong.
+
       console.error(
         `Backend returned code ${error.status}, ` +
         `body was: ${JSON.stringify(error.error)}`);

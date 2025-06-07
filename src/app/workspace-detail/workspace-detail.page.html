@@ -81,11 +81,35 @@
     <p *ngIf="workspace.es_owner_solicitante" style="color: green;">Tú eres el owner de este espacio.</p>
 
     <hr>
-    <h4>Contenido del Espacio (En desarrollo)</h4>
-    <p>Aquí se mostrará el chat grupal, las notas y carpetas del espacio.</p>
-    <!-- Placeholder for chat -->
-    <div style="border: 1px dashed #ccc; padding: 10px; margin-top: 15px; min-height: 100px;">
-        Chat Grupal (Próximamente)
+
+   <!-- Chat Section -->
+    <div class="chat-container">
+      <!-- Chat Messages Area -->
+      <div class="chat-messages" #chatMessagesContainer>
+        <ion-list>
+          <ion-item *ngFor="let msg of messages">
+            <ion-label [ngClass]="{
+              'user-message': isMyMessage(msg),
+              'bot-message': !isMyMessage(msg)
+            }">
+              <div class="author-name" *ngIf="!isMyMessage(msg)">{{ msg.authorName }}</div>
+              <div class="message-content">{{ msg.content }}</div>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+      </div>
+
+      <!-- Message Input Section -->
+      <div class="message-input-section">
+        <ion-input
+          [(ngModel)]="userMessage"
+          placeholder="Habla con el asistente..."
+          (keydown.enter)="sendMessage()">
+        </ion-input>
+        <ion-button fill="clear" (click)="sendMessage()" [disabled]="!userMessage.trim()">
+          <ion-icon name="send-outline"></ion-icon>
+        </ion-button>
+      </div>
     </div>
   </div>
   <div *ngIf="isLoading" class="ion-text-center ion-padding">
