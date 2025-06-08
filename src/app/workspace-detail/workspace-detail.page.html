@@ -11,8 +11,11 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
+  <ion-content [fullscreen]="true" class="chat-page-content">
+
+
   <ion-menu side="end" menuId="workspaceMenu" contentId="workspace-main-content">
+    
     <ion-header>
       <ion-toolbar color="medium">
         <ion-title>Opciones del Espacio</ion-title>
@@ -72,38 +75,46 @@
 
   <!-- Main content outlet -->
   <ion-router-outlet id="workspace-main-content"></ion-router-outlet>
+ <div class="page-container" *ngIf="!isLoading && workspace">
+    <!-- Header info section (not full height) -->
+    <div class="ion-padding workspace-header-info">
+      <h3>Bienvenido a: {{ workspace.nombre }}</h3>
+      <p>ID del Espacio: {{ workspace.espacio_id }}</p>
+      <p>Owner: {{ workspace.nombre_owner || workspace.owner_id }}</p>
+      <p *ngIf="workspace.es_owner_solicitante" style="color: green;">Tú eres el owner de este espacio.</p>
+      <hr>
+    </div>
 
-  <!-- Main page content -->
-  <div class="ion-padding" *ngIf="!isLoading && workspace">
-    <h3>Bienvenido a: {{ workspace.nombre }}</h3>
-    <p>ID del Espacio: {{ workspace.espacio_id }}</p>
-    <p>Owner: {{ workspace.nombre_owner || workspace.owner_id }}</p>
-    <p *ngIf="workspace.es_owner_solicitante" style="color: green;">Tú eres el owner de este espacio.</p>
-
-    <hr>
-
-   <!-- Chat Section -->
+    <!-- Chat Section (will flex to take remaining space) -->
     <div class="chat-container">
       <!-- Chat Messages Area -->
       <div class="chat-messages" #chatMessagesContainer>
         <ion-list>
-          <ion-item *ngFor="let msg of messages">
-            <ion-label [ngClass]="{
-              'user-message': isMyMessage(msg),
-              'bot-message': !isMyMessage(msg)
+          <!-- Loop through messages and apply dynamic classes -->
+          <ion-item *ngFor="let msg of messages" lines="none">
+            <div class="message-label" [ngClass]="{ 
+              'my-user': isMyMessage(msg), 
+              'other-user': !isMyMessage(msg) && msg.role === 'user',
+              'llm-assistant': msg.role === 'assistant'
             }">
-              <div class="author-name" *ngIf="!isMyMessage(msg)">{{ msg.authorName }}</div>
-              <div class="message-content">{{ msg.content }}</div>
-            </ion-label>
+              <div class="message-bubble">
+                <div class="author-name">{{ msg.authorName }}</div>
+                <div class="message-content">{{ msg.content }}</div>
+              </div>
+            </div>
           </ion-item>
         </ion-list>
       </div>
 
       <!-- Message Input Section -->
       <div class="message-input-section">
+        <!-- New button to trigger LLM -->
+        <ion-button fill="clear" (click)="toggleLlmMode()" [color]="isLlmMode ? 'primary' : 'medium'">
+          <ion-icon name="flash-outline"></ion-icon>
+        </ion-button>
         <ion-input
           [(ngModel)]="userMessage"
-          placeholder="Habla con el asistente..."
+          [placeholder]="isLlmMode ? 'Pregunta a la IA...' : 'Escribe un mensaje...'"
           (keydown.enter)="sendMessage()">
         </ion-input>
         <ion-button fill="clear" (click)="sendMessage()" [disabled]="!userMessage.trim()">
@@ -112,6 +123,9 @@
       </div>
     </div>
   </div>
+
+
+
   <div *ngIf="isLoading" class="ion-text-center ion-padding">
     <ion-spinner name="crescent"></ion-spinner>
     <p>Cargando datos del espacio...</p>
