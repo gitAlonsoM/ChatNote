@@ -64,11 +64,43 @@
             <ion-label>Ver Miembros</ion-label>
         </ion-item>
 
+        <ion-item-divider>
         <ion-item button disabled>
-            <ion-icon name="folder-open-outline" slot="start"></ion-icon>
-            <ion-label>Carpetas del Espacio (Próximamente)</ion-label>
+                      <ion-label>Carpetas del Espacio</ion-label>
+
         </ion-item>
 
+          
+       
+
+     </ion-item-divider>
+
+        <ion-item button (click)="openCreateWorkspaceFolderModal()">
+          <ion-icon name="add-circle-outline" slot="start"></ion-icon>
+          <ion-label>Crear Carpeta</ion-label>
+        </ion-item>
+        
+        <ion-item *ngIf="isLoadingFolders">
+          <ion-spinner name="dots" slot="start"></ion-spinner>
+          <ion-label>Cargando carpetas...</ion-label>
+        </ion-item>
+
+        <ion-item
+          button
+          *ngFor="let folder of workspaceFolders"
+          (click)="navigateToWorkspaceFolder(folder)"
+        >
+          <ion-icon name="folder-outline" slot="start"></ion-icon>
+          <ion-label>{{ folder.name }}</ion-label>
+        </ion-item>
+
+        <ion-item *ngIf="!isLoadingFolders && workspaceFolders.length === 0">
+          <ion-icon slot="start" name="information-circle-outline" color="medium"></ion-icon>
+          <ion-label class="ion-text-wrap" color="medium">Este espacio no tiene carpetas.</ion-label>
+        </ion-item>
+
+ 
+        
       </ion-list>
     </ion-content>
   </ion-menu>

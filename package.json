@@ -34,6 +34,7 @@
     "@capacitor/status-bar": "6.0.1",
     "@ionic/angular": "^8.0.0",
     "@ionic/storage-angular": "^4.0.0",
+    "date-fns": "^2.0.0",
     "express": "^4.21.0",
     "firebase": "^11.7.1",
     "ionicons": "^7.0.0",

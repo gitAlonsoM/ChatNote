@@ -10,9 +10,12 @@ import { CarpetaCreatePage } from './carpeta-create.page';
 @NgModule({
   imports: [
     CommonModule,
-    FormsModule,    // Necesario para [(ngModel)]
+    FormsModule,    
     IonicModule
   ],
-  declarations: [CarpetaCreatePage]
+   // 1. Declare the component so this module knows about it.
+  declarations: [CarpetaCreatePage],
+  // 2. Export the component so other modules that import this one can use it.
+  exports: [CarpetaCreatePage]
 })
 export class CarpetaCreatePageModule {}

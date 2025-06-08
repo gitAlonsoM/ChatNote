@@ -11,6 +11,8 @@ import { WorkspaceMembersPage } from '../modals/workspace-members/workspace-memb
 import { WorkspaceInvitePage } from '../modals/workspace-invite/workspace-invite.page';
 import { WorkspaceChatService, WorkspaceChatMessage } from '../services/workspace-chat.service';
 import { AuthService } from '../services/auth.service';
+import { WorkspaceFolderService, WorkspaceFolder } from '../services/workspace-folder.service';
+import { CarpetaCreatePage } from '../carpeta-create/carpeta-create.page';
 
 @Component({
   selector: 'app-workspace-detail',
@@ -29,6 +31,10 @@ export class WorkspaceDetailPage implements OnInit, OnDestroy{
 
 
   currentUserEmail: string | null = null;
+
+  workspaceFolders: WorkspaceFolder[] = [];
+  isLoadingFolders: boolean = false;
+
   currentUserName: string | null = null;
   
   isLlmMode: boolean = false; // To track if we are in "ask the AI" mode
@@ -52,7 +58,10 @@ export class WorkspaceDetailPage implements OnInit, OnDestroy{
     private menuCtrl: MenuController,
     private loadingCtrl: LoadingController,
     private cdr: ChangeDetectorRef,
-    private invitationService: InvitationService 
+    private invitationService: InvitationService,
+
+    private workspaceFolderService: WorkspaceFolderService
+
   ) {
     console.log('DEBUG: [WorkspaceDetailPage] Constructor.');
 
@@ -78,6 +87,9 @@ export class WorkspaceDetailPage implements OnInit, OnDestroy{
         this.workspaceId = +id;
         console.log('DEBUG: [WorkspaceDetailPage] Workspace ID from route:', this.workspaceId);
         this.loadWorkspaceDetails();
+
+        this.loadWorkspaceFolders();
+
         this.initializeChat(); // Combined initialization
 
 
@@ -89,6 +101,10 @@ export class WorkspaceDetailPage implements OnInit, OnDestroy{
       }
     });
   }
+
+
+
+
 
   async loadWorkspaceDetails() {
     if (!this.workspaceId) return;
@@ -127,6 +143,66 @@ export class WorkspaceDetailPage implements OnInit, OnDestroy{
       }
     });
   }
+
+
+
+   loadWorkspaceFolders() {
+    if (!this.workspaceId) return;
+    this.isLoadingFolders = true;
+    this.workspaceFolderService.getFolders(this.workspaceId).pipe(
+      takeUntil(this.ngUnsubscribe)
+    ).subscribe({
+      next: (folders) => {
+        this.workspaceFolders = folders;
+        this.isLoadingFolders = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.isLoadingFolders = false;
+        this.showToast(`Error al cargar carpetas: ${err.message}`, 'danger');
+      }
+    });
+  }
+
+  async openCreateWorkspaceFolderModal() {
+    await this.menuCtrl.close('workspaceMenu');
+    const modal = await this.modalCtrl.create({
+      component: CarpetaCreatePage, // Reusing the same modal component
+    });
+
+
+     modal.onDidDismiss().then(async (result) => {
+      console.log('DEBUG: [WorkspaceDetailPage] Create folder modal dismissed. Role:', result.role, 'Data:', result.data);
+      
+      // We only proceed if the modal was confirmed and returned the folderName.
+      if (result.role === 'confirm' && result.data?.created) {
+        const folderName = result.data.folderName;
+        
+        if (this.workspaceId) {
+          this.workspaceFolderService.createFolder(this.workspaceId, folderName).subscribe({
+            next: (response) => {
+              this.showToast(response.message || `Carpeta "${folderName}" creada.`, 'success');
+              this.loadWorkspaceFolders(); // Reload the folder list for the workspace.
+            },
+            error: (err) => {
+              console.error('DEBUG: [WorkspaceDetailPage] Error creating workspace folder:', err);
+              this.showToast(err.message, 'danger');
+            }
+          });
+        }
+      }
+    });
+
+    return await modal.present();
+  }
+
+  async navigateToWorkspaceFolder(folder: WorkspaceFolder) {
+    await this.menuCtrl.close('workspaceMenu');
+    if (this.workspaceId) {
+      this.router.navigate(['/workspace-folder', this.workspaceId, folder.id]);
+    }
+  }
+
 
   initializeChat() {
     if (!this.workspaceId) return;

@@ -145,8 +145,6 @@ En futuro, podrían usarse Camera, Haptics, etc., desde la UI.
 ## Estructura del Proyecto
 El proyecto sigue una estructura típica de una aplicación Angular con Ionic. A continuación, se detalla la estructura principal del proyecto:
 
-Listado de rutas de carpetas 
-
 C:\USERS\ALONM\DESKTOP\CHATNOTE_IONIC\SRC\APP
 |   app-routing.module.ts
 |   app.component.html
@@ -154,7 +152,7 @@ C:\USERS\ALONM\DESKTOP\CHATNOTE_IONIC\SRC\APP
 |   app.component.spec.ts
 |   app.component.ts
 |   app.module.ts
-|   
+|
 +---carpeta
 |       carpeta-routing.module.ts
 |       carpeta.module.ts
@@ -162,7 +160,7 @@ C:\USERS\ALONM\DESKTOP\CHATNOTE_IONIC\SRC\APP
 |       carpeta.page.scss
 |       carpeta.page.spec.ts
 |       carpeta.page.ts
-|       
+|
 +---carpeta-create
 |       carpeta-create.module.ts
 |       carpeta-create.page.html
@@ -291,18 +289,28 @@ C:\USERS\ALONM\DESKTOP\CHATNOTE_IONIC\SRC\APP
 |       invitation.service.ts
 |       nota.service.ts
 |       task.service.spec.ts
+|       workspace-chat.service.ts
+|       workspace-folder.service.ts
 |       workspace.service.spec.ts
 |       workspace.service.ts
 |
-\---workspace-detail
-        workspace-detail-routing.module.ts
-        workspace-detail.module.ts
-        workspace-detail.page.html
-        workspace-detail.page.scss
-        workspace-detail.page.spec.ts
-        workspace-detail.page.ts
++---workspace-detail
+|       workspace-detail-routing.module.ts
+|       workspace-detail.module.ts
+|       workspace-detail.page.html
+|       workspace-detail.page.scss
+|       workspace-detail.page.spec.ts
+|       workspace-detail.page.ts
+|
+\---workspace-folder
+        workspace-folder-routing.module.ts
+        workspace-folder.module.ts
+        workspace-folder.page.html
+        workspace-folder.page.scss
+        workspace-folder.page.spec.ts
+        workspace-folder.page.ts
 
-PS C:\Users\alonm\Desktop\ChatNote_IONIC> 
+PS C:\Users\alonm\Desktop\ChatNote_IONIC>
 
 # ======================================================================================
 # DESCRIPCION MODULOS Y ARCHIVOS CLAVES DEL PROYECTO
@@ -839,6 +847,80 @@ Llamadas Múltiples a la API: Se observó que las acciones del usuario (como el 
 - **Limpieza de Base de Datos:**
   - Se identificaron y eliminaron las tablas obsoletas `Mensaje` y `SesionActiva`, junto con la secuencia `seq_mensaje`, para mantener el esquema de la base de datos limpio y alineado con la funcionalidad actual.
 ## =================================================================
+
+SESION 08 -06 -2025
+
+ACTA DE SESIÓN TÉCNICA - 08 de Junio de 2025
+
+Objetivo Principal: Implementar la gestión de carpetas en espacios colaborativos y depurar un error crítico en la creación de carpetas personales.
+
+1. Funcionalidad Implementada (Carpetas Colaborativas)
+
+Se completó con éxito la arquitectura para la gestión de carpetas y notas dentro de los espacios colaborativos.
+
+Base de Datos (Oracle):
+
+Se crearon los procedimientos prc_crear_carpeta_espacio, prc_renombrar_carpeta_espacio y prc_eliminar_carpeta_espacio.
+
+Se implementaron las funciones fnc_leer_carpetas_del_espacio y fnc_leer_notas_de_carpeta_espacio para leer datos validando la membresía del usuario.
+
+Backend (Django):
+
+Se modularizó la lógica creando los servicios workspace_folder_service.py y vistas views_workspace_folder.py.
+
+Se añadieron los endpoints RESTful necesarios en urls.py para las operaciones CRUD sobre carpetas y notas de espacio (ej. /api/workspaces/<id>/folders/).
+
+Frontend (Ionic/Angular):
+
+Se creó la página workspace-folder para visualizar el contenido de una carpeta colaborativa.
+
+Se implementó WorkspaceFolderService para interactuar con la nueva API.
+
+Se reutilizó el modal CarpetaCreatePage para la creación de carpetas desde la vista de detalle del espacio (workspace-detail.page.ts), funcionando correctamente.
+
+2. Problema Crítico Depurado (Creación de Carpetas Personales)
+
+- Síntoma del Error:
+Al intentar crear una carpeta personal desde el menú principal (app.component.ts), la acción fallaba silenciosamente en el frontend. Aunque la carpeta se creaba en la base de datos (confirmado vía API y SQL), el subscribe en app.component.ts nunca se ejecutaba. Esto impedía mostrar notificaciones (toast) y, crucialmente, la UI no se actualizaba para mostrar la nueva carpeta hasta que el usuario cerraba y abría sesión de nuevo. Los console.log insertados en el modal CarpetaCreatePage no aparecían en la consola F12.
+
+- Diagnóstico y Causa Raíz:
+El problema fue identificado como un conflicto de declaración de módulos en Angular. El componente reutilizable CarpetaCreatePage estaba siendo declarado incorrectamente en dos módulos diferentes:
+
+Directamente en AppModule.
+
+Dentro de su propio módulo, CarpetaCreatePageModule, que a su vez era importado por otros módulos lazy-loaded como WorkspaceDetailPageModule.
+
+Esta doble declaración creaba una ambigüedad en el inyector de dependencias de Angular. Cuando AppComponent (del AppModule raíz) intentaba instanciar el modal, Angular generaba una versión "hueca" del componente, sin sus bindings de eventos ((click)) ni dependencias (ModalController, etc.) correctamente conectadas, resultando en un fallo silencioso de la interacción del usuario.
+
+- Solución Implementada:
+Se aplicó el patrón canónico de Angular para componentes reutilizables:
+
+Centralización del Módulo del Componente: Se modificó src/app/carpeta-create/carpeta-create.module.ts para que no solo declare el componente CarpetaCreatePage, sino que también lo exporte. Esto lo convierte en una unidad autónoma y portable.
+
+Limpieza de Declaraciones Duplicadas: Se eliminó la declaración de CarpetaCreatePage del array declarations en el módulo raíz (src/app/app.module.ts).
+
+Importación Correcta: Se modificaron todos los módulos que necesitan usar el modal para que importen CarpetaCreatePageModule. Esto incluye:
+
+src/app/app.module.ts (para el menú principal).
+
+src/app/workspace-detail/workspace-detail.module.ts (para los espacios colaborativos).
+
+Lógica de Refresco: Se confirmó que la lógica en el subscribe de openCreateFolderModal() en app.component.ts incluyera una llamada explícita a this.cargarCarpetasPersonales() para forzar la actualización de la lista de carpetas en el menú tras una creación exitosa.
+
+3. Estado Actual
+
+Éxito: Tras la reestructuración de los módulos, el error se ha resuelto completamente.
+
+La creación de carpetas personales desde el menú principal ahora funciona como se espera:
+
+El modal se abre y sus eventos ((click)) se registran correctamente.
+
+Los console.log de depuración aparecen en la consola F12, proporcionando trazabilidad completa del flujo.
+
+Al crear la carpeta, el subscribe se ejecuta, se muestra un toast de éxito y el menú se actualiza inmediatamente para mostrar la nueva carpeta sin necesidad de reiniciar la sesión.
+
+## =================================================================
+
 
 
 

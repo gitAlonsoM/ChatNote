@@ -5,15 +5,13 @@ import { Router, NavigationEnd, Event as RouterEvent } from '@angular/router';
 import { AuthService } from './services/auth.service';
 import { Subscription, Subject } from 'rxjs'; 
 import { filter, takeUntil, tap, distinctUntilChanged } from 'rxjs/operators';
-
 import { CarpetaCreatePage } from './carpeta-create/carpeta-create.page';
 import { CarpetaService, Carpeta } from './services/carpeta.service';
-
 import { WorkspaceService, Workspace } from './services/workspace.service'; 
 import { WorkspaceCreatePage } from './modals/workspace-create/workspace-create.page'; 
-
 import { InvitationService, Invitation } from './services/invitation.service';
 import { InvitationsManagerPage } from './modals/invitations-manager/invitations-manager.page';
+
 
 @Component({
   selector: 'app-root',
@@ -289,6 +287,8 @@ export class AppComponent implements OnInit, OnDestroy {
     });
     modal.onDidDismiss().then(async (result) => {
       console.log('DEBUG: [AppComponent] Modal de creación de ESPACIO CERRADO. Role:', result.role, 'Data:', result.data);
+
+
       if (result.role === 'confirm' && result.data && result.data.created) {
         this.showCustomToast(`Espacio "${result.data.workspaceName}" creado.`, 'success');
         await this.cargarEspaciosColaborativos(); 
@@ -313,14 +313,40 @@ export class AppComponent implements OnInit, OnDestroy {
       await this.closeCurrentMenu();
       return;
     }
+    console.log('DEBUG;... openCreateFolderModal ');
+
     await this.closeCurrentMenu();
     const modal = await this.modalCtrl.create({ component: CarpetaCreatePage });
-    modal.onDidDismiss().then((result) => {
-      console.log('[AppComponent] Modal de creación CERRADO. Role:', result.role, 'Data:', result.data);
-      if (result.role === 'confirm' && result.data && result.data.created) {
-        console.log('[AppComponent] Carpeta creada (modal):', result.data.folderName);
-        this.showCustomToast(`Carpeta "${result.data.folderName}" creada.`, 'success');
-        this.cargarCarpetasPersonales(); 
+
+
+
+ modal.onDidDismiss().then((result) => {
+      // Added detailed DEBUG logs and ensured UI refresh.
+      console.log('DEBUG: AppComponent - Modal de creación PERSONAL CERRADO. Role:', result.role, 'Data:', result.data);
+      
+        if (result.role === 'confirm' && result.data?.created) {
+        const folderName = result.data.folderName;
+        
+        console.log(`DEBUG: AppComponent - Llamando a carpetaService.createPersonalFolder con nombre: "${folderName}"`);
+        
+        this.carpetaService.createPersonalFolder(folderName).subscribe({
+            next: (response) => {
+              // Assuming backend returns a structure like { success: true, message: "..." }
+              // Adjust if your backend returns something different on 201 Created.
+              // For now, we'll assume any successful HTTP response (2xx) means success.
+              console.log('DEBUG: subscribe() next - Creación de carpeta exitosa. Respuesta:', response);
+              this.showCustomToast(`Carpeta "${folderName}" creada con éxito.`, 'success');
+              
+              // THIS IS THE FIX: Explicitly reload the folder list to refresh the UI.
+              console.log('DEBUG: subscribe() next - Llamando a cargarCarpetasPersonales() para refrescar el menú.');
+              this.cargarCarpetasPersonales(); 
+            },
+            error: (err) => {
+              console.error('DEBUG: subscribe() error - Error al crear carpeta:', err);
+              const errorMessage = err.error?.message || err.message || 'Error desconocido al crear la carpeta.';
+              this.showCustomToast(errorMessage, 'danger');
+            }
+        });
       }
     });
     return await modal.present();
@@ -375,4 +401,9 @@ export class AppComponent implements OnInit, OnDestroy {
     console.log(`[AppComponent] Navegando a carpeta: ${carpeta.nombre} (ID: ${carpeta.carpeta_id})`);
     this.router.navigate(['/carpeta', carpeta.carpeta_id]);
   }
+
+   public logCurrentFolders(): void {
+    console.log('DEBUG: [MENU WILL OPEN] Current state of this.carpetas:', JSON.parse(JSON.stringify(this.carpetas)));
+  }
+
 }

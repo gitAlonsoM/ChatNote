@@ -1,0 +1,59 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>{{ pageTitle }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="cancel()">Cerrar</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <ion-item lines="none">
+    <ion-label position="stacked" color="medium">Contenido de la Nota</ion-label>
+    <p class="note-content-display">{{ isEditMode ? taskToEdit.content : noteContent }}</p>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="stacked">Asignar a</ion-label>
+    <ion-select [(ngModel)]="selectedAssigneeId" placeholder="Seleccionar miembro">
+      <ion-select-option *ngFor="let member of members" [value]="member.user_id">
+        {{ member.nombre_usuario }} ({{ member.email }})
+      </ion-select-option>
+    </ion-select>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="stacked">Detalles (Opcional)</ion-label>
+    <ion-textarea [(ngModel)]="description" placeholder="Añade instrucciones o detalles..." rows="4"></ion-textarea>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="stacked">Fecha Límite (Opcional)</ion-label>
+    <ion-input [value]="formattedDueDate" readonly id="due-date-picker"></ion-input>
+    <ion-popover trigger="due-date-picker" size="cover">
+      <ng-template>
+        <ion-datetime 
+          presentation="date"
+          [value]="dueDate"
+          (ionChange)="dateChanged($event)"
+          [showDefaultButtons]="true"
+          doneText="Hecho"
+          cancelText="Cancelar"
+          >
+        </ion-datetime>
+      </ng-template>
+    </ion-popover>
+    <ion-button fill="clear" slot="end" (click)="clearDate()" *ngIf="dueDate">
+      <ion-icon name="close-circle" color="medium"></ion-icon>
+    </ion-button>
+  </ion-item>
+
+</ion-content>
+
+<ion-footer class="ion-no-border">
+  <ion-toolbar>
+    <ion-button expand="block" (click)="confirm()" [disabled]="!selectedAssigneeId">
+      {{ isEditMode ? 'Guardar Cambios' : 'Confirmar Asignación' }}
+    </ion-button>
+  </ion-toolbar>
+</ion-footer>

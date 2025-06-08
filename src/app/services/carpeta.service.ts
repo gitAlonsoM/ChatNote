@@ -33,17 +33,15 @@ export class CarpetaService {
   }
 
   createPersonalFolder(nombreCarpeta: string): Observable<any> {
-    console.log('[CarpetaService] Iniciando createPersonalFolder con nombre:', nombreCarpeta);
-
-    // Envuelve la llamada a getCurrentUser() en 'from' y usa 'switchMap'
-    return from(this.authService.getCurrentUser()).pipe(
+    console.log('DEBUG: CarpetaService - Starting createPersonalFolder with name:', nombreCarpeta);
+  return from(this.authService.getCurrentUser()).pipe(
       switchMap(user => { // 'user' es el objeto User o null
         if (!user || !user.uid) {
-          const errorMsg = 'Usuario no autenticado. No se puede crear carpeta.';
-          console.error('[CarpetaService] Error:', errorMsg);
+          const errorMsg = 'User not authenticated. Cannot create folder.';
+          console.error('DEBUG: CarpetaService - Error:', errorMsg);
           return throwError(() => new Error(errorMsg));
         }
-        console.log('[CarpetaService] Usuario obtenido para crear carpeta. UID:', user.uid);
+        console.log('DEBUG: CarpetaService - User obtained for folder creation. UID:', user.uid);
 
         const payload = {
           uid: user.uid, // Accede al UID de forma segura
@@ -57,19 +55,23 @@ export class CarpetaService {
           })
         };
 
-        console.log('[CarpetaService] Enviando POST a:', this.apiUrl, 'con payload:', payload);
+        console.log('DEBUG: CarpetaService - Sending POST to:', this.apiUrl, 'with payload:', payload);
 
         return this.http.post<any>(this.apiUrl, payload, httpOptions)
           .pipe(
             tap(response => {
-              console.log('[CarpetaService] Respuesta exitosa de POST:', response);
+              console.log('DEBUG: CarpetaService - Raw successful response from POST:', response);
             }),
             catchError((error: HttpErrorResponse) => {
-              console.error('[CarpetaService] Error en la solicitud POST. Status:', error.status, 'Error Body:', error.error);
+              console.error('DEBUG: CarpetaService - Error in POST request. Status:', error.status, 'Error Body:', error.error);
               // Propagar el HttpErrorResponse completo para que el componente pueda manejarlo
               return throwError(() => error);
             })
           );
+      }),
+      catchError(err => {
+        console.error('DEBUG: CarpetaService - Error in the outer pipe (likely from authService):', err);
+        return throwError(() => err);
       })
     );
   }

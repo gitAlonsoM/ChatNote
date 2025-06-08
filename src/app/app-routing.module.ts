@@ -63,6 +63,14 @@ const routes: Routes = [
     loadChildren: () => import('./carpeta/carpeta.module').then( m => m.CarpetaPageModule),
     canActivate: [AuthGuard] // Proteger esta ruta, ya que es contenido del usuario
   },
+
+  {
+    path: 'workspace-folder/:workspaceId/:folderId',
+    loadChildren: () => import('./workspace-folder/workspace-folder.module').then( m => m.WorkspaceFolderPageModule),
+    canActivate: [AuthGuard]
+  },
+
+
   {
     path: 'workspace-create',
     loadChildren: () => import('./modals/workspace-create/workspace-create.module').then( m => m.WorkspaceCreatePageModule)
@@ -87,6 +95,11 @@ const routes: Routes = [
     path: 'invitations-manager',
     loadChildren: () => import('./modals/invitations-manager/invitations-manager.module').then( m => m.InvitationsManagerPageModule)
   },
+  {
+    path: 'workspace-folder',
+    loadChildren: () => import('./workspace-folder/workspace-folder.module').then( m => m.WorkspaceFolderPageModule)
+  },
+
 
   
 

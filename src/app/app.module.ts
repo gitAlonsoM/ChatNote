@@ -15,11 +15,14 @@ import { environment } from '../environments/environment';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicStorageModule } from '@ionic/storage-angular';
 import { CarpetaCreatePage } from './carpeta-create/carpeta-create.page'; 
+import { CarpetaCreatePageModule } from './carpeta-create/carpeta-create.module';
+import { TaskAssignPageModule } from './modals/task-assign/task-assign.module';
+
 
 @NgModule({
   declarations: [
     AppComponent,
-    CarpetaCreatePage
+    //CarpetaCreatePage
    
   ],
   imports: [
@@ -29,6 +32,9 @@ import { CarpetaCreatePage } from './carpeta-create/carpeta-create.page';
     AppRoutingModule,
     HttpClientModule, //modulo HTTP de Angular para hacer uso de la API
     BrowserAnimationsModule,
+    CarpetaCreatePageModule,
+    TaskAssignPageModule,
+
   ],
   providers: [
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },

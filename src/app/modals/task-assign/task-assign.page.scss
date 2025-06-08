@@ -1,0 +1,12 @@
+.note-content-display {
+  white-space: pre-wrap; // Preserves line breaks from the original note
+  background-color: #f4f5f8; // A light grey background
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 4px;
+  border: 1px solid #e0e0e0;
+  font-style: italic;
+  color: #555;
+  width: 100%;
+  display: block;
+}
