@@ -1,0 +1,33 @@
+<!-- src/app/modals/activity-log/activity-log.page.html -->
+ <!-- src\app\modals\activity-log\activity-log.page.html -->
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>{{ workspaceName }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()">
+        <ion-icon name="close" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <div *ngIf="isLoading" class="ion-text-center">
+    <ion-spinner name="dots"></ion-spinner>
+  </div>
+
+  <ion-list *ngIf="!isLoading && activityLog.length > 0">
+    <ion-item *ngFor="let entry of activityLog" lines="full">
+      <ion-label class="ion-text-wrap">
+        <p><strong>{{ entry.userName }}</strong></p>
+        <h2>{{ entry.detail }}</h2>
+        <p><small>{{ entry.timestamp | date:'dd/MM/yyyy HH:mm:ss' }}</small></p>
+      </ion-label>
+    </ion-item>
+  </ion-list>
+
+  <div *ngIf="!isLoading && activityLog.length === 0" class="ion-text-center ion-padding">
+    <ion-icon name="archive-outline" size="large" color="medium"></ion-icon>
+    <p>No hay actividad registrada en este espacio todavía.</p>
+  </div>
+</ion-content>

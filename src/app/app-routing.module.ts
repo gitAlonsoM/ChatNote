@@ -99,6 +99,11 @@ const routes: Routes = [
     path: 'workspace-folder',
     loadChildren: () => import('./workspace-folder/workspace-folder.module').then( m => m.WorkspaceFolderPageModule)
   },
+  {
+    path: 'activity-log',
+    loadChildren: () => import('./modals/activity-log/activity-log.module').then( m => m.ActivityLogPageModule)
+  },
+
 
 
   

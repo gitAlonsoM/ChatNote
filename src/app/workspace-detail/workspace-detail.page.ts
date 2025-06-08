@@ -13,6 +13,8 @@ import { WorkspaceChatService, WorkspaceChatMessage } from '../services/workspac
 import { AuthService } from '../services/auth.service';
 import { WorkspaceFolderService, WorkspaceFolder } from '../services/workspace-folder.service';
 import { CarpetaCreatePage } from '../carpeta-create/carpeta-create.page';
+import { ActivityLogPage } from '../modals/activity-log/activity-log.page';
+
 
 @Component({
   selector: 'app-workspace-detail',
@@ -478,6 +480,20 @@ export class WorkspaceDetailPage implements OnInit, OnDestroy{
     return await modal.present();
   }
 
+   async openActivityLogModal() {
+    if (!this.workspaceId) return;
+    await this.menuCtrl.close('workspaceMenu');
+    const modal = await this.modalCtrl.create({
+      component: ActivityLogPage,
+      componentProps: {
+        workspaceId: this.workspaceId,
+        workspaceName: `Registro de '${this.workspace?.nombre}'`
+      }
+    });
+    return await modal.present();
+  }
+
+
   goBackToChat() {
     console.log('DEBUG: [WorkspaceDetailPage] goBackToChat - Navigating to /chat due to error or manual action.');
     this.router.navigate(['/chat']);
@@ -496,4 +512,6 @@ export class WorkspaceDetailPage implements OnInit, OnDestroy{
   }
 
 
+
+  
 }

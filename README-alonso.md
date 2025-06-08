@@ -919,7 +919,18 @@ Los console.log de depuración aparecen en la consola F12, proporcionando trazab
 
 Al crear la carpeta, el subscribe se ejecuta, se muestra un toast de éxito y el menú se actualiza inmediatamente para mostrar la nueva carpeta sin necesidad de reiniciar la sesión.
 
+Resumen Técnico Actualizado: Fallo y Solución del ORA-01805
+Síntoma: La vista de una carpeta colaborativa fallaba (UI vacía) en el instante en que contenía al menos una tarea con fecha de vencimiento (due_date). La petición GET al backend para leer el contenido de la carpeta resultaba en un error ORA-01805: possible error in date/time operation.
+Causa Raíz: El error se originaba en la capa de base de datos. La columna TAREA.DUE_DATE es de tipo TIMESTAMP WITH TIME ZONE. La sesión de base de datos del cliente (oracledb en Django) no tenía una configuración de zona horaria explícita (ALTER SESSION SET TIME_ZONE...), lo que impedía a Oracle procesar y devolver correctamente este tipo de dato, resultando en el ORA-01805.
+Solución Implementada: Se aplicó una solución de dos partes para eliminar la dependencia de la configuración de la sesión del cliente y hacer el flujo de datos robusto:
+Capa de Base de Datos (PL/SQL): Se modificó la función fnc_leer_contenido_carpeta_espacio. En lugar de devolver el TIMESTAMP nativo, se usó la función TO_CHAR(t.due_date, 'YYYY-MM-DD"T"HH24:MI:SS.FF3"Z"'). Esto formatea la fecha directamente en la base de datos como un string universal en formato ISO 8601 UTC, que es agnóstico a la zona horaria.
+Capa de Backend (Python/Django): En el servicio workspace_folder_service.py, se ajustó la función list_folder_content. Dado que due_date ahora se recibe como un string ya formateado desde la base de datos, se eliminó la llamada .isoformat() que se aplicaba previamente, previniendo un AttributeError en Python
+
+
 ## =================================================================
+
+
+
 
 
 
