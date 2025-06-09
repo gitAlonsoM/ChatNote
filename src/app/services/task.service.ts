@@ -2,7 +2,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, from, throwError } from 'rxjs';
-import { switchMap, catchError } from 'rxjs/operators';
+import { switchMap, catchError, map } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -16,6 +16,15 @@ export interface WorkspaceTask {
   assignee_name: string;
   author_id: string;
   author_name: string;
+  created_at: string;
+}
+
+export interface AssignedTask { 
+  id: number;
+  note_content: string;
+  description: string;
+  due_date: string | null;
+  assigner_name: string;
   created_at: string;
 }
 
@@ -75,6 +84,17 @@ export class TaskService {
       };
       const url = `${this.apiUrl}${workspaceId}/tasks/${taskId}/`;
       return this.http.put(url, payload);
+    });
+  }
+
+
+   getMyTasksInWorkspace(workspaceId: number): Observable<AssignedTask[]> {
+    return this.executeRequest(uid => {
+      const params = new HttpParams().set('uid', uid);
+      const url = `${this.apiUrl}${workspaceId}/my-tasks/`;
+      return this.http.get<{ tasks: AssignedTask[] }>(url, { params }).pipe(
+        map(response => response.tasks)
+      );
     });
   }
 

@@ -102,7 +102,11 @@ const routes: Routes = [
   {
     path: 'activity-log',
     loadChildren: () => import('./modals/activity-log/activity-log.module').then( m => m.ActivityLogPageModule)
+  },  {
+    path: 'my-tasks',
+    loadChildren: () => import('./modals/my-tasks/my-tasks.module').then( m => m.MyTasksPageModule)
   },
+
 
 
 

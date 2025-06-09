@@ -14,6 +14,7 @@ import { AuthService } from '../services/auth.service';
 import { WorkspaceFolderService, WorkspaceFolder } from '../services/workspace-folder.service';
 import { CarpetaCreatePage } from '../carpeta-create/carpeta-create.page';
 import { ActivityLogPage } from '../modals/activity-log/activity-log.page';
+import { MyTasksPage } from '../modals/my-tasks/my-tasks.page';
 
 
 @Component({
@@ -488,6 +489,19 @@ export class WorkspaceDetailPage implements OnInit, OnDestroy{
       componentProps: {
         workspaceId: this.workspaceId,
         workspaceName: `Registro de '${this.workspace?.nombre}'`
+      }
+    });
+    return await modal.present();
+  }
+
+  async openMyTasksModal() {
+    if (!this.workspaceId) return;
+    await this.menuCtrl.close('workspaceMenu');
+    const modal = await this.modalCtrl.create({
+      component: MyTasksPage,
+      componentProps: {
+        workspaceId: this.workspaceId,
+        workspaceName: `Tareas en '${this.workspace?.nombre}'`
       }
     });
     return await modal.present();

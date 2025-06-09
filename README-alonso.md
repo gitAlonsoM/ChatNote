@@ -847,84 +847,55 @@ Llamadas Múltiples a la API: Se observó que las acciones del usuario (como el 
 - **Limpieza de Base de Datos:**
   - Se identificaron y eliminaron las tablas obsoletas `Mensaje` y `SesionActiva`, junto con la secuencia `seq_mensaje`, para mantener el esquema de la base de datos limpio y alineado con la funcionalidad actual.
 ## =================================================================
+# ACTA DE SESIÓN TÉCNICA - 08 de Junio de 2025
 
-SESION 08 -06 -2025
+**Objetivo Principal:** Implementar la gestión de carpetas colaborativas, depurar errores críticos de la base de datos y añadir funcionalidades de visualización de actividad y tareas.
 
-ACTA DE SESIÓN TÉCNICA - 08 de Junio de 2025
+---
 
-Objetivo Principal: Implementar la gestión de carpetas en espacios colaborativos y depurar un error crítico en la creación de carpetas personales.
+### 1. Funcionalidad Implementada (Carpetas Colaborativas y UI)
 
-1. Funcionalidad Implementada (Carpetas Colaborativas)
+Se completó con éxito la arquitectura para la gestión de carpetas y notas dentro de los espacios colaborativos (creación, renombrado, eliminación) a través de nuevos procedimientos PL/SQL, servicios y vistas modulares en Django, y una nueva página (`workspace-folder`) en Ionic.
 
-Se completó con éxito la arquitectura para la gestión de carpetas y notas dentro de los espacios colaborativos.
+### 2. Problemas Críticos Depurados
 
-Base de Datos (Oracle):
+#### 2.1. Creación de Carpetas Personales (Fallo Silencioso en UI)
+- **Síntoma:** Crear una carpeta personal no actualizaba la UI y el modal de creación no respondía.
+- **Causa Raíz:** Conflicto de declaración de módulos en Angular. El componente `CarpetaCreatePage` estaba declarado tanto en `AppModule` como en su propio módulo, creando una instancia "hueca" sin `bindings`.
+- **Solución:** Se aplicó el patrón canónico de Angular: el módulo `CarpetaCreatePageModule` ahora exporta el componente, y se eliminó la declaración duplicada de `AppModule`, importando `CarpetaCreatePageModule` donde era necesario.
 
-Se crearon los procedimientos prc_crear_carpeta_espacio, prc_renombrar_carpeta_espacio y prc_eliminar_carpeta_espacio.
+#### 2.2. Visualización de Carpetas con Tareas (Error `ORA-01805`)
+- **Síntoma:** La UI de una carpeta se rompía si contenía una tarea con fecha de vencimiento (`due_date`). El backend devolvía un error `ORA-01805: possible error in date/time operation`.
+- **Causa Raíz:** La sesión de Django/`oracledb` no manejaba correctamente el tipo `TIMESTAMP WITH TIME ZONE` de Oracle, fallando al intentar leer el `due_date`.
+- **Solución:** Se modificó la función PL/SQL `fnc_leer_contenido_carpeta_espacio` para formatear la fecha como un string ISO 8601 UTC usando `TO_CHAR`. Esto desacopló la conversión de la sesión del cliente, resolviendo el error de raíz.
 
-Se implementaron las funciones fnc_leer_carpetas_del_espacio y fnc_leer_notas_de_carpeta_espacio para leer datos validando la membresía del usuario.
+#### 2.3. Creación de Tareas sin Descripción (Error `ORA-01400`)
+- **Síntoma:** La aplicación fallaba al intentar crear una tarea sin descripción.
+- **Causa Raíz:** El procedimiento `prc_crear_tarea` intentaba insertar `NULL` en la columna `descripcion`, que está definida como `NOT NULL`.
+- **Solución:** Se robusteció el procedimiento `prc_crear_tarea` usando `NVL(p_desc, 'Tarea sin descripción')` en la sentencia `INSERT`, asegurando que siempre se inserte un valor válido.
 
-Backend (Django):
+#### 2.4. Arranque del Servidor (Error `NameError: name 'List' is not defined`)
+- **Síntoma:** El servidor Django no podía iniciarse, provocando errores CORS en el frontend.
+- **Causa Raíz:** Se omitió la importación de `List` del módulo `typing` en `task_service.py` al usar anotaciones de tipo.
+- **Solución:** Se añadió `from typing import List, Dict, Any` al inicio del archivo, resolviendo el `NameError`.
 
-Se modularizó la lógica creando los servicios workspace_folder_service.py y vistas views_workspace_folder.py.
+---
 
-Se añadieron los endpoints RESTful necesarios en urls.py para las operaciones CRUD sobre carpetas y notas de espacio (ej. /api/workspaces/<id>/folders/).
+### 3. Nuevas Funcionalidades Implementadas
 
-Frontend (Ionic/Angular):
+#### 3.1. Modal de Registro de Actividad
+- **Implementación:** Se creó un nuevo flujo completo (función PL/SQL `fnc_leer_log_actividad_espacio`, servicio y vista en Django, y modal en Ionic) para consultar la tabla `AuditLog` y mostrar un historial de todas las acciones relevantes del espacio.
+- **Mejora:** Se enriqueció la auditoría añadiendo registros a `AuditLog` en los procedimientos de aceptación/rechazo de invitaciones y abandono de espacios para un registro más completo.
 
-Se creó la página workspace-folder para visualizar el contenido de una carpeta colaborativa.
+#### 3.2. Modal de "Mis Tareas Asignadas"
+- **Implementación:** Se creó un flujo similar (función PL/SQL, servicio, vista y modal) para que un usuario pueda ver una lista de todas las tareas que le han sido asignadas dentro del espacio de trabajo actual.
+- **Depuración:** Se solucionó un error `404 Not Found` inicial asegurando que la ruta del nuevo endpoint estuviera correctamente registrada en `api/urls.py` y que el servidor se reiniciara para cargarla.
 
-Se implementó WorkspaceFolderService para interactuar con la nueva API.
+---
 
-Se reutilizó el modal CarpetaCreatePage para la creación de carpetas desde la vista de detalle del espacio (workspace-detail.page.ts), funcionando correctamente.
+### 4. Estado Actual
 
-2. Problema Crítico Depurado (Creación de Carpetas Personales)
-
-- Síntoma del Error:
-Al intentar crear una carpeta personal desde el menú principal (app.component.ts), la acción fallaba silenciosamente en el frontend. Aunque la carpeta se creaba en la base de datos (confirmado vía API y SQL), el subscribe en app.component.ts nunca se ejecutaba. Esto impedía mostrar notificaciones (toast) y, crucialmente, la UI no se actualizaba para mostrar la nueva carpeta hasta que el usuario cerraba y abría sesión de nuevo. Los console.log insertados en el modal CarpetaCreatePage no aparecían en la consola F12.
-
-- Diagnóstico y Causa Raíz:
-El problema fue identificado como un conflicto de declaración de módulos en Angular. El componente reutilizable CarpetaCreatePage estaba siendo declarado incorrectamente en dos módulos diferentes:
-
-Directamente en AppModule.
-
-Dentro de su propio módulo, CarpetaCreatePageModule, que a su vez era importado por otros módulos lazy-loaded como WorkspaceDetailPageModule.
-
-Esta doble declaración creaba una ambigüedad en el inyector de dependencias de Angular. Cuando AppComponent (del AppModule raíz) intentaba instanciar el modal, Angular generaba una versión "hueca" del componente, sin sus bindings de eventos ((click)) ni dependencias (ModalController, etc.) correctamente conectadas, resultando en un fallo silencioso de la interacción del usuario.
-
-- Solución Implementada:
-Se aplicó el patrón canónico de Angular para componentes reutilizables:
-
-Centralización del Módulo del Componente: Se modificó src/app/carpeta-create/carpeta-create.module.ts para que no solo declare el componente CarpetaCreatePage, sino que también lo exporte. Esto lo convierte en una unidad autónoma y portable.
-
-Limpieza de Declaraciones Duplicadas: Se eliminó la declaración de CarpetaCreatePage del array declarations en el módulo raíz (src/app/app.module.ts).
-
-Importación Correcta: Se modificaron todos los módulos que necesitan usar el modal para que importen CarpetaCreatePageModule. Esto incluye:
-
-src/app/app.module.ts (para el menú principal).
-
-src/app/workspace-detail/workspace-detail.module.ts (para los espacios colaborativos).
-
-Lógica de Refresco: Se confirmó que la lógica en el subscribe de openCreateFolderModal() en app.component.ts incluyera una llamada explícita a this.cargarCarpetasPersonales() para forzar la actualización de la lista de carpetas en el menú tras una creación exitosa.
-
-3. Estado Actual
-
-Éxito: Tras la reestructuración de los módulos, el error se ha resuelto completamente.
-
-La creación de carpetas personales desde el menú principal ahora funciona como se espera:
-
-El modal se abre y sus eventos ((click)) se registran correctamente.
-
-Los console.log de depuración aparecen en la consola F12, proporcionando trazabilidad completa del flujo.
-
-Al crear la carpeta, el subscribe se ejecuta, se muestra un toast de éxito y el menú se actualiza inmediatamente para mostrar la nueva carpeta sin necesidad de reiniciar la sesión.
-
-Resumen Técnico Actualizado: Fallo y Solución del ORA-01805
-Síntoma: La vista de una carpeta colaborativa fallaba (UI vacía) en el instante en que contenía al menos una tarea con fecha de vencimiento (due_date). La petición GET al backend para leer el contenido de la carpeta resultaba en un error ORA-01805: possible error in date/time operation.
-Causa Raíz: El error se originaba en la capa de base de datos. La columna TAREA.DUE_DATE es de tipo TIMESTAMP WITH TIME ZONE. La sesión de base de datos del cliente (oracledb en Django) no tenía una configuración de zona horaria explícita (ALTER SESSION SET TIME_ZONE...), lo que impedía a Oracle procesar y devolver correctamente este tipo de dato, resultando en el ORA-01805.
-Solución Implementada: Se aplicó una solución de dos partes para eliminar la dependencia de la configuración de la sesión del cliente y hacer el flujo de datos robusto:
-Capa de Base de Datos (PL/SQL): Se modificó la función fnc_leer_contenido_carpeta_espacio. En lugar de devolver el TIMESTAMP nativo, se usó la función TO_CHAR(t.due_date, 'YYYY-MM-DD"T"HH24:MI:SS.FF3"Z"'). Esto formatea la fecha directamente en la base de datos como un string universal en formato ISO 8601 UTC, que es agnóstico a la zona horaria.
-Capa de Backend (Python/Django): En el servicio workspace_folder_service.py, se ajustó la función list_folder_content. Dado que due_date ahora se recibe como un string ya formateado desde la base de datos, se eliminó la llamada .isoformat() que se aplicaba previamente, previniendo un AttributeError en Python
+**Éxito:** La sesión concluye con la corrección exitosa de todos los errores críticos de base de datos y de servidor. Las funcionalidades de "Registro de Actividad" y "Mis Tareas Asignadas" han sido implementadas y están **listas y operativas**, mostrando la información correspondiente en sus respectivos modales desde el menú del espacio de trabajo.
 
 
 ## =================================================================
