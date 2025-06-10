@@ -61,7 +61,7 @@ IMPORTANTE: Mantén siempre la estructura de modos y no abandones tu rol princip
   }
 
 
-  private backendApiUrl: string; // Ya no se inicializa aquí directamente
+  private backendApiUrl: string;
 
 
   constructor(
@@ -69,15 +69,18 @@ IMPORTANTE: Mantén siempre la estructura de modos y no abandones tu rol princip
     private platform: Platform,
     private authService: AuthService // DEBUG: inject AuthService to obtain UID
   ) { 
- // Determinar la URL del backend según la plataforma
-    if (this.platform.is('android') && !this.platform.is('mobileweb')) {
-      // Para emulador Android nativo, usa 10.0.2.2 para acceder al localhost del host
-      this.backendApiUrl = 'http://10.0.2.2:8000/api/llm/';
-      console.log('DEBUG: [ChatService] Running on Android native. Backend API URL for LLM:', this.backendApiUrl); // DEBUG
-    } else {
-      // Para web (ionic serve) u otras plataformas
+   // Determine the backend URL based on the platform.
+    if (this.platform.is('hybrid') || this.platform.is('android')) {
+      // For any native platform (emulator or physical device),
+      // we now standardize on using localhost, which is made accessible
+      // via the 'adb reverse' command for physical devices.
+      // The emulator alias 10.0.2.2 is now deprecated in this logic to keep it simple.
       this.backendApiUrl = 'http://127.0.0.1:8000/api/llm/';
-      console.log('DEBUG: [ChatService] Running on Web/Other. Backend API URL for LLM:', this.backendApiUrl); // DEBUG
+      console.log('DEBUG: [ChatService] Running on Native (Android/Hybrid). Backend API URL for LLM:', this.backendApiUrl);
+    } else {
+      // For web (ionic serve) or other platforms.
+      this.backendApiUrl = 'http://127.0.0.1:8000/api/llm/';
+      console.log('DEBUG: [ChatService] Running on Web/Other. Backend API URL for LLM:', this.backendApiUrl);
     }
   }
 

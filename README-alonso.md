@@ -510,7 +510,7 @@ npx cap open android
 Esto generará la APK sin firmar, y Android Studio te proporcionará la ruta donde se guarda.
 
 
-## Generacion de APK Sin Firmar (2)
+## Generacion de APK Sin Firmar (2) Rapida
 ionic build
 npx cap sync android
 cd android

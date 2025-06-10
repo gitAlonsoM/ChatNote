@@ -14,7 +14,7 @@
           [ngClass]="{ 'green-light': isLoggedIn, 'gray-light': !isLoggedIn }"
         ></div>
         <div class="connection-status">
-          {{ isLoggedIn ? 'Estás como usuario' : 'Estás como invitado' }}
+          {{ isLoggedIn ? '' : 'Conectado sin autentificar' }}
         </div>
       </div>
     </div>
