@@ -90,3 +90,7 @@
     *   **Siguiente Paso:** Aplicar la lógica de URL dinámica (cambiando a `http://10.0.2.2:8000/...` para Android nativo) a todos los servicios relevantes de Ionic.
 
 ---
+
+
+
+

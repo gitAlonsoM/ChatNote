@@ -19,7 +19,7 @@
     <ion-item *ngFor="let task of assignedTasks" lines="full">
       <ion-label class="ion-text-wrap">
         <h2>{{ task.description }}</h2>
-        <p><strong>Nota original:</strong> {{ task.note_content }}</p>
+        <p><strong>Nota:</strong> {{ task.note_content }}</p>
         <p *ngIf="task.due_date"><strong>Vence:</strong> {{ task.due_date | date:'dd/MM/yyyy HH:mm' }}</p>
         <p><small>Asignada por {{ task.assigner_name }} el {{ task.created_at | date:'dd/MM/yyyy' }}</small></p>
       </ion-label>
