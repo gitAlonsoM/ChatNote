@@ -122,7 +122,7 @@
     <!-- Header info section (not full height) -->
     <div class="ion-padding workspace-header-info">
       <h3>Bienvenido a: {{ workspace.nombre }}</h3>
-      <p>ID del Espacio: {{ workspace.espacio_id }}</p>
+      <!-- <p>ID del Espacio: {{ workspace.espacio_id }}</p> -->
       <p>Owner: {{ workspace.nombre_owner || workspace.owner_id }}</p>
       <p *ngIf="workspace.es_owner_solicitante" style="color: green;">Tú eres el owner de este espacio.</p>
       <hr>

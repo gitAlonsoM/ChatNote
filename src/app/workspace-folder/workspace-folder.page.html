@@ -29,7 +29,7 @@
       <ion-item-sliding *ngFor="let task of tasks">
         <ion-item lines="inset" class="task-item">
           <ion-label class="ion-text-wrap">
-            <h2>{{ task.content }}</h2>
+            <h2>Apunte: {{ task.content }}</h2> 
             <p *ngIf="task.description"><strong>Detalles:</strong> {{ task.description }}</p>
             <p><small>Asignada a: <strong>{{ task.assignee_name }}</strong></small></p>
             <p *ngIf="task.due_date"><small>Fecha Límite: <strong>{{ task.due_date | date:'dd/MM/yyyy' }}</strong></small></p>
@@ -50,7 +50,7 @@
   <!-- Notes Section -->
   <div *ngIf="notes.length > 0 || tasks.length > 0">
     <ion-list-header>
-      <ion-label color="secondary">Notas</ion-label>
+      <ion-label color="secondary">Apuntes</ion-label>
     </ion-list-header>
   </div>
   
@@ -87,7 +87,7 @@
 <ion-footer class="ion-no-border">
   <ion-toolbar>
     <ion-item lines="none">
-      <ion-input type="text" placeholder="Escribe una nueva nota..." [(ngModel)]="newNoteContent" (keyup.enter)="createNote()"></ion-input>
+      <ion-input type="text" placeholder="Escribe un nuevo apunte..." [(ngModel)]="newNoteContent" (keyup.enter)="createNote()"></ion-input>
       <ion-button slot="end" fill="clear" (click)="createNote()" [disabled]="!newNoteContent.trim()">
         <ion-icon name="send" color="primary"></ion-icon>
       </ion-button>

@@ -501,7 +501,7 @@ export class WorkspaceDetailPage implements OnInit, OnDestroy{
       component: MyTasksPage,
       componentProps: {
         workspaceId: this.workspaceId,
-        workspaceName: `Tareas en '${this.workspace?.nombre}'`
+        workspaceName: `Mis Tareas en '${this.workspace?.nombre}'`
       }
     });
     return await modal.present();
