@@ -1,143 +1,35 @@
+
 # ======================================================================================
-# OVERVIEW IONIC
 
-Qué hace Ionic en esta aplicación
-Interfaz híbrida (móvil + web):
-Usa Ionic Framework junto con Angular para construir una SPA que funciona en navegador y en dispositivos nativos (Android/iOS) vía Capacitor.
+# Overview: Ionic/Angular (Actualizado)
 
-Autenticación y sincronización:
-Integra Firebase Auth (con @angular/fire) para manejar el registro, login y estado de sesión del usuario.
+Esta aplicación es una **Single Page Application (SPA)** híbrida construida con **Ionic Framework** y **Angular**. Su rol es ser la única interfaz de usuario para todas las interacciones del cliente, ofreciendo una experiencia fluida y unificada tanto en navegadores web como en dispositivos móviles nativos (Android/iOS) a través de **Capacitor**.
 
-Comunicación con el backend Django:
-A través de HTTP (Angular HttpClient en navegador y @capacitor-community/http en dispositivos móviles), envía mensajes y datos (UID, email, chat) a los endpoints /api/register/ y /api/llm/.
+## Arquitectura y Módulos Clave
 
-Almacenamiento local de chats:
-Con @ionic/storage-angular, guarda y recupera el historial de mensajes para continuidad de la conversación incluso sin red.
+El frontend está diseñado con una arquitectura modular y basada en servicios que separa claramente las responsabilidades y escala de manera eficiente.
 
-Funcionalidades nativas vía Capacitor:
+* **Capa de Servicios (`/services`):** Es el corazón de la lógica del cliente. Cada servicio encapsula un dominio de negocio específico:
+    * **`AuthService`**: Gestiona el ciclo de vida completo de la autenticación con Firebase (`@angular/fire`). Métodos clave como `register` y `login` no solo autentican al usuario, sino que también invocan a `sendToDjango()` para sincronizar el perfil del usuario (UID, email, nombre) con el backend de Oracle, asegurando la consistencia. Expone el estado de la sesión a toda la aplicación a través del observable `isLoggedIn$`.
+    * **`WorkspaceService` y `InvitationService`**: Manejan toda la comunicación HTTP para la gestión de espacios colaborativos, miembros e invitaciones, llamando a los endpoints REST correspondientes en Django.
+    * **`CarpetaService` y `NotaService` (implícito)**: Realizan las operaciones CRUD para las carpetas y notas personales del usuario.
+    * **`ChatService` (Chat Personal)**: Orquesta la interacción con el asistente de IA. Su pieza central es el `_defaultPrompt`, una instrucción de sistema muy detallada que le enseña al LLM a actuar en "Modo Conversacional", "Modo READ", o "Modo CAPTURA DE NOTA". El método `sendMessageToLLM()` envía el historial de chat y el UID del usuario al backend para su procesamiento.
+    * **`WorkspaceChatService` (Chat Colaborativo)**: Implementa el chat en tiempo real. Su método `connect()` establece una conexión **WebSocket** persistente con el backend. `sendMessage()` envía nuevos mensajes, y el observable `messages$` emite los mensajes recibidos del servidor para que la UI los renderice.
 
-Geolocalización: @capacitor/geolocation para obtener coordenadas.
+* **Componente Raíz (`app.component.ts`):** Actúa como el orquestador principal de la UI. Se suscribe al `isLoggedIn$` de `AuthService` para recargar dinámicamente los datos del menú lateral (carpetas personales, espacios de trabajo, invitaciones pendientes) llamando a los servicios correspondientes, asegurando que el menú siempre esté actualizado.
 
-Cámara, Haptics, Keyboard, App, StatusBar… plugins listados pero de uso futuro (ej. adjuntar archivo, enviar audio).
+* **Seguridad y Navegación:**
+    * **`app-routing.module.ts`**: Define todas las rutas de la aplicación, utilizando `lazy loading` para una carga eficiente.
+    * **`AuthGuard`**: Protege rutas específicas, asegurando que solo los usuarios autenticados puedan acceder a ellas, consultando el estado de `AuthService` antes de permitir la navegación.
 
-Ruteo y protección de rutas:
-Define rutas lazy-loaded para login, register, chat, recover-key, quienes-somos, con un AuthGuard donde corresponde.
+## Flujo de Comunicación
 
-Dependencias principales (extracto de package.json)
-Paquete	Propósito
-@ionic/angular (^8.0.0)	Componentes UI nativos híbridos
-@angular/core, @angular/router, etc.	Framework web, ruteo y lógica de la SPA
-@capacitor/core, @capacitor/android…	Ecosistema Capacitor para acceder a APIs nativas
-@ionic/storage-angular (^4.0.0)	Almacenamiento clave-valor en dispositivos
-@angular/fire (^18.0.1)	Integración con Firebase App y Auth
-rxjs (~7.8.0)	Manejo reactivo de datos y eventos
-socket.io (^4.8.0), express (^4.21.0)	Instalados pero no referenciados directamente en el código
+La comunicación con el backend es bidireccional y utiliza dos protocolos principales:
 
-Archivos más relevantes y su rol
-(Todas las rutas son relativas al directorio raíz de ChatNote_IONIC)
+1.  **API REST (HTTP):** Para todas las operaciones de estado (CRUD), los servicios de Angular utilizan `HttpClient` (y `@capacitor-community/http` en nativo) para realizar peticiones a los endpoints de Django. **En cada llamada, se envía el UID del usuario (obtenido de `AuthService`)**, que el backend utiliza para autorizar la operación y filtrar los datos correspondientes.
+2.  **WebSockets:** Para el chat colaborativo, `WorkspaceChatService` establece una conexión directa y persistente con el servidor `Daphne/Channels` de Django. Los mensajes fluyen en ambas direcciones a través de esta conexión, permitiendo una interacción instantánea sin necesidad de polling HTTP.
 
-package.json
 
-URL: /package.json
-
-Lista dependencias, scripts (start, build, test, lint) y versiones usadas en el frontend.
-
-capacitor.config.ts
-
-URL: /capacitor.config.ts
-
-Define la appId (io.ionic.starter), appName (Quaderna) y el directorio web de compilación (www).
-
-src/app/app.module.ts
-
-URL: /src/app/app.module.ts
-
-Imports globales:
-
-IonicModule.forRoot()
-
-IonicStorageModule.forRoot() (persistencia local)
-
-HttpClientModule (API REST)
-
-Firebase (provideFirebaseApp, provideAuth)
-
-BrowserAnimationsModule
-
-Providers:
-
-IonicRouteStrategy para reuse de rutas.
-
-src/app/app-routing.module.ts
-
-URL: /src/app/app-routing.module.ts
-
-Define rutas lazy-loaded para páginas clave:
-
-/register → RegisterPageModule
-
-/login → LoginPageModule
-
-/chat → ChatPageModule
-
-/recover-key, /quienes-somos
-
-Redirección por defecto a /login.
-
-src/environments/environment.ts
-
-URL: /src/environments/environment.ts
-
-Configuración de Firebase para desarrollo (API key, projectId, etc.).
-
-src/environments/environment.prod.ts
-
-URL: /src/environments/environment.prod.ts
-
-Misma configuración de Firebase para producción, con production: true.
-
-src/app/chat/chat.page.ts
-
-URL: /src/app/chat/chat.page.ts
-
-Lógica de la UI de chat:
-
-Inyección de ChatService, AuthService, ChatStorageService, GeolocationService.
-
-Envía/recibe mensajes, despliega notificaciones, desplaza scroll.
-
-Usa el storage para persistir y recuperar el historial de chat.
-
-Obtiene coordenadas con GeolocationService y las envía al LLM.
-
-src/app/chat/chat.service.ts
-
-URL: /src/app/chat/chat.service.ts
-
-Orquesta llamadas al backend Django:
-
-En navegador via HttpClient.post(...).
-
-En dispositivo híbrido via @capacitor-community/http.
-
-Construye payload con uid, email y system prompt para el LLM.
-
-Endpoint hardcodeado: http://127.0.0.1:8000/api/llm/.
-
-Interdependencias y conexiones
-Ionic UI ↔ Angular: todo el routing y módulos se gestionan con Angular, Ionic aporta componentes visuales (ion-button, ion-input, etc.).
-
-AppModule ↔ Plugins nativos: IonicModule, IonicStorageModule y los plugins de Capacitor se configuran en el módulo raíz.
-
-ChatService ↔ AuthService: obtiene uid y email del usuario actual para incluirlos en cada petición al LLM.
-
-ChatPage ↔ ChatStorageService: persiste mensajes localmente para offline y recarga de la app.
-
-Capacitor plugins ↔ Código Angular:
-
-GeolocationService invoca el plugin nativo para coordenadas.
-
-En futuro, podrían usarse Camera, Haptics, etc., desde la UI.
 
 
 # ======================================================================================
@@ -401,7 +293,6 @@ Angular: Framework para desarrollo de aplicaciones web.
 Capacitor: Herramienta para acceder a APIs nativas en aplicaciones móviles.
 Ionic Storage: Para la persistencia de datos localmente.
 Capacitor Preferences: Utilizado para manejar el almacenamiento clave-valor en Capacitor 6.
-SQLite: Base de datos ligera para almacenamiento local en dispositivos móviles.
 
 ## Archivos Importantes
 angular.json: Configuración del proyecto Angular.
@@ -526,9 +417,6 @@ AndroidManifest.xml
 ##
 poder ver los logs en la terminal de arranque
 ionic serve --consolelogs
-
-
-
 
 
 ## =================================================================

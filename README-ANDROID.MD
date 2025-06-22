@@ -250,7 +250,7 @@ Iniciar el backend normalmente, es el mismo proceso que se realiza siempre en lo
 2.  **Detener el Servidor Django:** En la terminal del backend, presiona `Ctrl + C`.
 3.  **Cerrar el Túnel de Red:** En la terminal principal, ejecuta:
 
-    ```bash
+    ```bashSoluciones Técnicas Implementadas
     adb reverse --remove-all
     ```
 4.  **Desconectar el Teléfono.**
